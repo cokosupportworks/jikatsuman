@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>自立活動プリントメーカー</title>
+  
+  <!-- Tailwind CSS の読み込み -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- React と アイコンライブラリ のインポートマップ -->
+  <script type="importmap">
+    {
+      "imports": {
+        "react": "https://esm.sh/react@18.2.0",
+        "react-dom/client": "https://esm.sh/react-dom@18.2.0/client",
+        "lucide-react": "https://esm.sh/lucide-react@0.300.0"
+      }
+    }
+  </script>
+
+  <!-- ブラウザ上でReact(JSX)を翻訳して動かすためのBabel -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body class="bg-slate-100">
+  
+  <!-- アプリの描画エリア -->
+  <div id="root"></div>
+
+  <!-- アプリの本体プログラム -->
+  <script type="text/babel" data-type="module">
+    import React, { useState, useEffect, useRef } from 'react';
+    import { createRoot } from 'react-dom/client';
+    import { 
+      ChevronRight, 
+      ChevronLeft, 
+      Printer, 
+      Image as ImageIcon,
+      CheckCircle2,
+      Copy,
+      Layout,
+      X,
+      AlertCircle,
+      RefreshCcw,
+      Type,
+      ZoomIn,
+      ZoomOut,
+      Trash2,
+      Save,
+      FolderOpen,
+      FileBox
+    } from 'lucide-react';
+
+    const App = () => {
+      // --- 状態管理 ---
+      const [step, setStep] = useState('environment_check');
+      const [isOfflineEnvironment, setIsOfflineEnvironment] = useState(false);
+      const [errorMessage, setErrorMessage] = useState(null);
+      
+      const [showCopyMessage, setShowCopyMessage] = useState(false);
+      const [showPromptModal, setShowPromptModal] = useState(false);
+      const [showPrintGuide, setShowPrintGuide] = useState(false);
+      
+      const [targetDomain, setTargetDomain] = useState('');
+      const [targetItem, setTargetItem] = useState('');
+      const [scenario, setScenario] = useState('');
+      const [textStyle, setTextStyle] = useState('ruby'); 
+      const [customGoal, setCustomGoal] = useState('');
+      const [worksheetTitle, setWorksheetTitle] = useState('');
+      
+      const [bindingMargin, setBindingMargin] = useState(false);
+
+      const [mangaData, setMangaData] = useState({
+        panels: [
+          { scene: "", dialogue: "" },
+          { scene: "", dialogue: "" },
+          { scene: "", dialogue: "" },
+          { scene: "", dialogue: "" }
+        ]
+      });
+
+      const [scale, setScale] = useState(1);
+      const BASE_WIDTH = 1024;
+      const BASE_HEIGHT = 768;
+
+      // --- DTPキャンバス用 状態管理 ---
+      const [elements, setElements] = useState([]);
+      const [selectedId, setSelectedId] = useState(null);
+      const [dragInfo, setDragInfo] = useState(null);
+      const [isEditingTextId, setIsEditingTextId] = useState(null);
+      const [isGeneratingImage, setIsGeneratingImage] = useState(false);
+
+      useEffect(() => {
+        const handleResize = () => {
+          if (step === 'preview') {
+            setScale(1);
+            return;
+          }
+          const sw = window.innerWidth / BASE_WIDTH;
+          const sh = window.innerHeight / BASE_HEIGHT;
+          setScale(Math.min(sw, sh));
+        };
+        window.addEventListener('resize', handleResize);
+        handleResize();
+        return () => window.removeEventListener('resize', handleResize);
+      }, [step]);
+
+      const domainData = [
+        { name: '1．健康の保持', items: ['（1）生活のリズムや生活習慣の形成に関すること', '（2）病気の状態の理解と生活管理に関すること', '（3）身体各部の状態の理解と養護に関すること', '（4）障害の特性の理解と生活環境の調整に関すること', '（5）健康状態の維持・改善に関すること'] },
+        { name: '2．心理的な安定', items: ['（1）情緒の安定に関すること', '（2）状況の理解と変化への対応に関すること', '（3）障害による学習上又は生活上の困難を改善・克服する意欲の向上に関すること'] },
+        { name: '3．人間関係の形成', items: ['（1）他者と関わりの基礎に関すること', '（2）他者の意図や感情の理解に関すること', '（3）自己の理解と行動の調整に関すること', '（4）集団への参加の基礎に関すること'] },
+        { name: '4．環境の把握', items: ['（1）保有する感覚の活用に関すること', '（2）感覚や認知の特性についての理解と対応に関すること', '（3）感覚の補助及び代行手段の活用に関すること', '（4）感覚を総合的に活用した周囲の状況についての把握と状況に応じた行動に関すること', '（5）認知や行動の手掛かりとなる概念の形成に関すること'] },
+        { name: '5．身体の動き', items: ['（1）姿勢と運動・動作の基本的技能に関すること', '（2）姿勢保持と運動・動作の補助的手段の活用に関すること', '（3）日常生活に必要な基本動作に関すること', '（4）身体の移動能力に関すること', '（5）作業に必要な動作と円滑な遂行に関すること'] },
+        { name: '6．コミュニケーション', items: ['（1）コミュニケーションの基礎的能力に関すること', '（2）言語の受容と表出に関すること', '（3）言語の形成と活用に関すること', '（4）コミュニケーション手段の選択と活用に関すること', '（5）状況に応じたコミュニケーションに関すること'] }
+      ];
+
+      const presetScenarios = {
+        '1．健康の保持': [
+          { label: '手洗いを嫌がる', scenario: '外(そと)から 帰(かえ)って きたとき、手(て)を 洗(あら)わずに 教室(きょうしつ)に 入(はい)ろうと する 場面(ばめん)です。', goal: 'ばいきんが ついて いる ことを 理解(りかい)し、手(て)を 洗(あら)う ことが 大切(たいせつ)です。', title: '清潔(せいけつ)な 生活(せいかつ)を 心(こころ)がけよう', panels: [{ scene: '外遊びから帰り、泥のついた手で教室に入る', dialogue: 'すぐ 遊(あそ)ぼう！' }, { scene: '先生が手を洗うよう注意する', dialogue: 'めんどくさいなあ。' }, { scene: '手の見えないバイキンのイメージ', dialogue: 'ばいきんが いっぱい！' }, { scene: '石鹸で手を洗っている', dialogue: '手(て)を 洗(あら)おう！' }] },
+          { label: '給食の好き嫌い', scenario: '給食(きゅうしょく)で 苦手(にがて)な 野菜(やさい)が 出(で)た 場面(ばめん)です。', goal: '一口(ひとくち)だけ 頑張(がんば)るか、「減(へ)らして」と 伝(つた)える ことが 大切(たいせつ)です。', title: '食事(しょくじ)の ときの 伝(つた)え方(かた)', panels: [{ scene: 'ブロッコリーを見て嫌な顔をする', dialogue: 'ブロッコリーだ…' }, { scene: 'お皿を押し除けて怒る', dialogue: '絶対(ぜったい) 食(た)べない！' }, { scene: '指を立てて「減らして」と伝える', dialogue: '減(へ)らして ください。' }, { scene: '少し食べて褒められる', dialogue: '少(すこ)し 食(た)べたよ！' }] },
+          { label: '服の裏表が逆', scenario: '着替(きが)えで、服(ふく)が 裏返(うらがえ)しの ままの 場面(ばめん)です。', goal: '着(き)る 前(まえ)に 服(ふく)の 印(しるし)を 探(さが)して 直(なお)す ことが 大切(たいせつ)です。', title: '正(ただ)しい 着替(きが)え方(かた)', panels: [{ scene: '裏返しのまま着替える', dialogue: '着替(きが)え 終(お)わった！' }, { scene: '裏返しを指摘されて恥ずかしい', dialogue: 'ちくちく するな…' }, { scene: '服のタグを探している', dialogue: 'しるしを 探(さが)そう。' }, { scene: '正しく着て笑顔', dialogue: 'これで ばっちりだ！' }] },
+          { label: '鼻水が出たまま', scenario: '鼻水(はなみず)を 服(ふく)の 袖(そで)で 拭(ふ)いて しまう 場面(ばめん)です。', goal: 'ティッシュを 使(つか)って 拭(ふ)き、ごみ箱(ばこ)に 捨(す)てる ことが 大切(たいせつ)です。', title: '鼻水(はなみず)が 出(で)た とき', panels: [{ scene: '鼻水が垂れている', dialogue: 'ずずーっ。' }, { scene: '袖で拭こうとする', dialogue: 'そでで 拭(ふ)いちゃお。' }, { scene: '先生がティッシュを指差す', dialogue: 'ティッシュで 拭(ふ)こう。' }, { scene: 'ティッシュをゴミ箱に捨てる', dialogue: 'ごみ箱(ばこ)に 捨(す)てよう。' }] },
+          { label: '体調不良を隠す', scenario: 'お腹(なか)が 痛(いた)いのに 我慢(がまん)して いる 場面(ばめん)です。', goal: '体(からだ)の 調子(ちょうし)が 悪(わる)い ときは 早(はや)めに 伝(つた)える ことが 大切(たいせつ)です。', title: '具合(ぐあい)が 悪(わる)い ときの 伝(つた)え方(かた)', panels: [{ scene: 'お腹を押さえて我慢している', dialogue: 'お腹(なか)が 痛(いた)いな…' }, { scene: '机に突っ伏す', dialogue: '言(い)い出(だ)せないよ…' }, { scene: '手を挙げて先生にアピールする', dialogue: '先生(せんせい)、痛(いた)いです。' }, { scene: '保健室で安心している', dialogue: '早(はや)めに 言(い)えば 安心(あんしん)。' }] }
+        ],
+        '2．心理的な安定': [
+          { label: '予定変更でパニック', scenario: '楽(たの)しみな 外遊(そとあそ)びが 雨(あめ)で なくなり、怒(おこ)って しまう 場面(ばめん)です。', goal: '「仕方(しかた)ないね」と 気持(きも)ちを 切(き)り替(か)える ことが 大切(たいせつ)です。', title: '気持(きも)ちの 切(き)り替(か)え方(かた)', panels: [{ scene: '雨を見て落ち込む', dialogue: '雨(あめ)だ！' }, { scene: '床に寝転がって怒る', dialogue: '絶対(ぜったい) 外(そと)に 行(い)く！' }, { scene: '深呼吸して粘土のカードを見る', dialogue: '仕方(しかた) ないね。' }, { scene: '室内で粘土遊びを楽しむ', dialogue: '中(なか)で 遊(あそ)ぼうっと！' }] },
+          { label: '失敗して怒る', scenario: '答(こた)えを 間違(まちが)えて、怒(おこ)って プリントを 丸(まる)める 場面(ばめん)です。', goal: '間違(まちが)えても 消(け)しゴムで 消(け)して、やり直(なお)す ことが 大切(たいせつ)です。', title: '間違(まちが)えた ときの やり方(かた)', panels: [{ scene: 'バツをつけられショックを受ける', dialogue: '間違(まちが)えちゃった…！' }, { scene: 'プリントをくしゃくしゃにする', dialogue: 'もう 嫌(いや)だ！' }, { scene: '消しゴムで消す', dialogue: '直(なお)せば いいんだ。' }, { scene: '書き直して笑顔', dialogue: '書(か)き直(なお)せたよ！' }] },
+          { label: 'ゲームで負けて泣く', scenario: '競争(きょうそう)で 負(ま)けて、悔(くや)しくて 泣(な)き叫(さけ)ぶ 場面(ばめん)です。', goal: '負(ま)けても「次(つぎ) 頑張(がんば)るぞ」と 考(かんが)えを 変(か)える ことが 大切(たいせつ)です。', title: '負(ま)けた ときの 気持(きも)ち', panels: [{ scene: 'かけっこでビリになる', dialogue: '悔(くや)しいよー！' }, { scene: '地面を叩いて泣く', dialogue: '一番(いちばん)じゃ なきゃ 嫌(いや)だ！' }, { scene: '深呼吸する', dialogue: '次(つぎ) 頑張(がんば)れば いいや。' }, { scene: '友達に拍手する', dialogue: 'おめでとう！' }] },
+          { label: '大きな音が怖い', scenario: '大(おお)きな 音(おと)に 驚(おどろ)いて パニックに なる 場面(ばめん)です。', goal: 'イヤーマフを つけたり、耳(みみ)を ふさぐ ことが 大切(たいせつ)です。', title: '苦手(にがて)な 音(おと)からの 守(まも)り方(かた)', panels: [{ scene: '大きな音にビクッとする', dialogue: 'なんだ 今(いま)の 音(おと)！' }, { scene: '逃げ出そうとする', dialogue: '逃(に)げなきゃ！' }, { scene: '手で耳を塞ぐ', dialogue: '耳(みみ)を ふさごう。' }, { scene: 'イヤーマフをつけて落ち着く', dialogue: 'これなら 大丈夫(だいじょうぶ)！' }] },
+          { label: '初めての場所で不安', scenario: '初(はじ)めての 場所(ばしょ)に 行(い)き、不安(ふあん)で 座(すわ)り込(こ)む 場面(ばめん)です。', goal: '先生(せんせい)と 予定表(よていひょう)を 見(み)て、見通(みとお)しを 持(も)つ ことが 大切(たいせつ)です。', title: '初(はじ)めての 場所(ばしょ)', panels: [{ scene: '広い施設で不安そうにする', dialogue: 'なんだか 怖(こわ)いな…。' }, { scene: '座り込む', dialogue: 'もう 歩(ある)けない。' }, { scene: '先生と予定表を見る', dialogue: '予定(よてい)を 確認(かくにん)しよう。' }, { scene: '安心して歩き出す', dialogue: '先生(せんせい)と 行(い)けば 安心(あんしん)！' }] }
+        ],
+        '3．人間関係の形成': [
+          { label: '貸してと言えず手が出る', scenario: '友(とも)だちの おもちゃを、黙(だま)って 横取(よこど)り する 場面(ばめん)です。', goal: '手(て)を 出(だ)さずに「貸(か)して」と 伝(つた)える ことが 大切(たいせつ)です。', title: 'おもちゃを 借(か)りる とき', panels: [{ scene: '友達のおもちゃを見ている', dialogue: '僕(ぼく)も 使(つか)いたいな。' }, { scene: '無言で奪い取ろうとする', dialogue: '（がしっ！）' }, { scene: '手を止めて顔を見る', dialogue: '取(と)っちゃ ダメ だった。' }, { scene: '言葉で貸してと言う', dialogue: '「貸(か)して」「いいよ」' }] },
+          { label: '距離感が近すぎる', scenario: '話(はな)しかける とき、顔(かお)を 近(ちか)づけすぎる 場面(ばめん)です。', goal: '腕(うで) １本分(いっぽんぶん) 距離(きょり)を あけて 話(はな)す ことが 大切(たいせつ)です。', title: 'ちょうど いい 距離(きょり)', panels: [{ scene: '顔のすぐ前で大声で話す', dialogue: 'ねえねえ！' }, { scene: '相手が顔をしかめて避ける', dialogue: 'うわっ！ 近(ちか)いよ！' }, { scene: '腕を伸ばして距離を測る', dialogue: '腕(うで) １本分(いっぽんぶん) 離(はな)れよう。' }, { scene: '適切な距離で話す', dialogue: '話(はな)し やすいね！' }] },
+          { label: '一方的に話す', scenario: '相手(あいて)が 退屈(たいくつ)して いても、自分(じぶん)の 話(はな)を し続(つづ)ける 場面(ばめん)です。', goal: '相手(あいて)の 顔(かお)を 見(み)て、話(はなし)を 終(お)わる ことが 大切(たいせつ)です。', title: '相手(あいて)の 気持(きも)ち', panels: [{ scene: '大好きな話を一方的にする', dialogue: 'それでね！ 次(つぎ)にね！' }, { scene: '相手が退屈そうにしている', dialogue: '（ふぁ〜。）' }, { scene: '相手の顔に気づく', dialogue: 'つまらなそう だな。' }, { scene: '話を切り上げて質問する', dialogue: '君(きみ)は 何(なに)が 好(す)き？' }] },
+          { label: '傷つくことを言う', scenario: '友(とも)だちの 失敗(しっぱい)に、「下手(へた)くそ」と 言(い)う 場面(ばめん)です。', goal: '優(やさ)しい 言葉(ことば)を かける ことが 大切(たいせつ)です。', title: 'ふわふわ 言葉(ことば)', panels: [{ scene: '友達が絵を失敗する', dialogue: 'うまく 描(か)けないな。' }, { scene: '下手くそだと笑う', dialogue: 'あはは！ 下手(へた)くそ！' }, { scene: '相手が泣きそうになりハッとする', dialogue: 'ちくちく 言葉(ことば) だった。' }, { scene: '励ます', dialogue: '大丈夫(だいじょうぶ)だよ！' }] },
+          { label: '勝手に人のものを使う', scenario: '友(とも)だちの 消(け)しゴムを、黙(だま)って 使(つか)う 場面(ばめん)です。', goal: '触(さわ)る 前(まえ)に、「使(つか)っても いい？」と 聞(き)く ことが 大切(たいせつ)です。', title: '物(もの)を 使(つか)う 約束(やくそく)', panels: [{ scene: '隣の席の消しゴムを見つける', dialogue: '消(け)しゴムが あるぞ。' }, { scene: '勝手にとって使う', dialogue: 'ちょっと 使(つか)っちゃお。' }, { scene: '手を止める', dialogue: '勝手(かって)に 使(つか)っちゃ ダメだ。' }, { scene: '相手に許可をもらう', dialogue: '使(つか)っても いい？' }] }
+        ],
+        '4．環境の把握': [
+          { label: '廊下を走る', scenario: '移動(いどう)中(ちゅう)に、嬉(うれ)しくて 廊下(ろうか)を 走(はし)って しまう 場面(ばめん)です。', goal: '先生(せんせい)や 友達(ともだち)に 合(あ)わせて、歩(ある)く ことが 大切(たいせつ)です。', title: '安全(あんぜん)な 移動(いどう)', panels: [{ scene: '嬉しくて一人だけ走る', dialogue: '一番(いちばん)のり だぞ！' }, { scene: '角でぶつかりそうになる', dialogue: 'わわっ！ あぶない！' }, { scene: '先生が歩く合図をしている', dialogue: '廊下(ろうか)は 歩(ある)くんだった。' }, { scene: '列について歩く', dialogue: 'みんなと 歩(ある)こう。' }] },
+          { label: '机がぐちゃぐちゃ', scenario: '机(つくえ)の 中(なか)が ぐちゃぐちゃで、道具(どうぐ)が 見(み)つからない 場面(ばめん)です。', goal: '使(つか)った ものは 決(き)まった 場所(ばしょ)に 戻(もど)す ことが 大切(たいせつ)です。', title: '机(つくえ)の 中(なか)を 片付(かたづ)けよう', panels: [{ scene: '机の上が散乱して焦る', dialogue: '消(け)しゴムが ないぞ！' }, { scene: '机の中もいっぱいで探せない', dialogue: '探(さが)せないよ〜。' }, { scene: '道具箱に綺麗にしまう', dialogue: '道具(どうぐ)箱(ばこ)へ 戻(もど)そう。' }, { scene: 'スッキリした机', dialogue: 'すぐ 見(み)つかるね！' }] },
+          { label: '遊びを終わりにできない', scenario: '休(やす)み 時間(じかん)が 終(お)わっても、ゲームを やめられない 場面(ばめん)です。', goal: 'タイマーが 鳴(な)ったら おしまい に する ことが 大切(たいせつ)です。', title: '時間(じかん)を 守(まも)ろう', panels: [{ scene: 'タブレットゲームに夢中', dialogue: '最高(さいこう)に 面白(おもしろ)い！' }, { scene: 'チャイムが鳴ってもやめない', dialogue: 'まだ 終(お)わらない！' }, { scene: 'タイマーの音に気づく', dialogue: 'おしまいだ。' }, { scene: '片付けて席に座る', dialogue: '準備(じゅんび)を しよう。' }] },
+          { label: 'お店で迷子になる', scenario: 'お店(みせ)で、勝(かって)に 離(はな)れて しまう 場面(ばめん)です。', goal: '見失(みうしな)ったら その 場(ば)から 動(うご)かない ことが 大切(たいせつ)です。', title: 'お店(みせ)での 約束(やくそく)', panels: [{ scene: '遠くのお菓子を見つける', dialogue: 'お菓子(かし)が ある！' }, { scene: '一人で走って行ってしまう', dialogue: '見(み)て こようっと！' }, { scene: 'お母さんがいないことに気づく', dialogue: 'お母(かあ)さんが いない…。' }, { scene: '立ち止まって待つ', dialogue: '動(うご)かずに 待(ま)とう。' }] },
+          { label: '寒くても半袖', scenario: '寒(さむ)い 日(ひ)なのに、半袖(はんそで)で 外(そと)に 出(で)る 場面(ばめん)です。', goal: '気温(きおん)に 合(あ)わせて、服(ふく)を 着替(きが)える ことが 大切(たいせつ)です。', title: '天気(てんき)に 合(あ)わせた 服(ふく)', panels: [{ scene: '雪の中を半袖で出ようとする', dialogue: '遊(あそ)んで くるぞ！' }, { scene: '外に出て震える', dialogue: 'すごく 寒(さむ)いよ〜。' }, { scene: 'ジャンパーを思い浮かべる', dialogue: '上(うえ)着(ぎ)を 着(き)るんだった。' }, { scene: '温かい服を着て外に出る', dialogue: 'これなら 寒(さむ)くないね！' }] }
+        ],
+        '5．身体の動き': [
+          { label: '椅子からずり落ちる', scenario: '授業(じゅぎょう)中(ちゅう)、机(つくえ)に 突(つ)っ伏(ぷ)したり ずり落(お)ちたり する 場面(ばめん)です。', goal: '背筋(せすじ)を 伸(の)ばして、正(ただ)しく 座(すわ)る ことが 大切(たいせつ)です。', title: '正(ただ)しい 姿勢(しせい)', panels: [{ scene: '頬杖をついて体が曲がっている', dialogue: 'ふにゃふにゃ する〜。' }, { scene: '机に突っ伏す', dialogue: '寝(ね)ちゃお うかな…。' }, { scene: '背筋を伸ばすイメージ', dialogue: '姿勢(しせい)を ピン！と しなきゃ。' }, { scene: 'まっすぐ座っている', dialogue: 'カッコ いいね！' }] },
+          { label: 'ハサミを人に向ける', scenario: '工作(こうさく)で、ハサミの 刃(は)を 友達(ともだち)に 向(む)ける 場面(ばめん)です。', goal: 'ハサミの 持(も)ち手(て)を 相手(あいて)に 向(む)けて 渡(わた)す ことが 大切(たいせつ)です。', title: '道具(どうぐ)の 正(ただ)しい 使(つか)い方(かた)', panels: [{ scene: 'ハサミを持ったまま歩く', dialogue: 'ハサミ 取(と)ってきたよ！' }, { scene: '刃先を友達に向けて渡そうとする', dialogue: 'これ 貸(か)して あげる。' }, { scene: '持ち手の方を相手に向ける', dialogue: '持(も)ち手(て)を 向(む)けるんだ。' }, { scene: '安全に渡す', dialogue: '安全(あんぜん)に 使(つか)おう。' }] },
+          { label: '鉛筆をグーで握る', scenario: '鉛筆(えんぴつ)を 握(にぎ)りしめて 書(か)いて、疲(つか)れる 場面(ばめん)です。', goal: '正(ただ)しい ３本(さんぼん)指(ゆび)で 鉛筆(えんぴつ)を 持(も)つ ことが 大切(たいせつ)です。', title: '鉛筆(えんぴつ)の 持(も)ち方(かた)', panels: [{ scene: '鉛筆をグーの形で握りしめる', dialogue: 'うまく 書(か)けないな。' }, { scene: '手が痛くなり鉛筆を投げる', dialogue: '手(て)が 疲(つか)れた！' }, { scene: '３本指で持つ練習', dialogue: '３本(ぼん)の 指(ゆび)で 持(も)つんだ。' }, { scene: '正しい持ち方で綺麗に書く', dialogue: '疲(つか)れないね！' }] },
+          { label: 'タッチが強すぎる', scenario: '友達(ともだち)に タッチ する とき、叩(たた)いて しまう 場面(ばめん)です。', goal: '「優(やさ)しく ポン」と 弱(よわ)い 力(ちから)で 触(さわ)る ことが 大切(たいせつ)です。', title: '優(やさ)しい 力加減(ちからかげん)', panels: [{ scene: '勢いよく手を振り上げる', dialogue: 'おはよう！！' }, { scene: '強く背中を叩く', dialogue: '（ばしっ！）痛(いた)いよ！' }, { scene: '手を止めて言い聞かせる', dialogue: '優(やさ)しく タッチ だった。' }, { scene: '肩を優しくポンと叩く', dialogue: '優(やさ)しく タッチだね。' }] },
+          { label: '階段をジャンプする', scenario: '階段(かいだん)を 慌(あわ)てて 飛(と)び降(お)りようと する 場面(ばめん)です。', goal: '手(て)すりを 持(も)って、一段(いちだん)ずつ 降(お)りる ことが 大切(たいせつ)です。', title: '階段(かいだん)の 降(お)り方(かた)', panels: [{ scene: '階段の上から飛び降りようとする', dialogue: 'ジャンプ して 降(お)りるぞ！' }, { scene: '先生に止められる', dialogue: '（危(あぶ)ない！）' }, { scene: '手すりを握る', dialogue: '手(て)すりを しっかり 持(も)つんだ。' }, { scene: '一段ずつゆっくり降りる', dialogue: 'ゆっくり 降(お)りれば 安全(あんぜん)だね。' }] }
+        ],
+        '6．コミュニケーション': [
+          { label: '先生の話を聞かない', scenario: '先生(せんせい)の 指示(しじ)を 聞(き)かずに 始(はじ)める 場面(ばめん)です。', goal: '最後(さいご)まで 聞(き)き、「はい」と 返事(へんじ)を する ことが 大切(たいせつ)です。', title: 'お話(はなし)の 聞(き)き方(かた)', panels: [{ scene: '先生が説明中に書き始める', dialogue: 'もう 書(か)こう！' }, { scene: '間違ったページをやる', dialogue: 'ここじゃ なかったの？' }, { scene: '手を膝に置いて話を聞く', dialogue: '最後(さいご)まで 聞(き)こう。' }, { scene: '返事をしてから書き始める', dialogue: '「はい！」始(はじ)めよう。' }] },
+          { label: '困っているのに言えない', scenario: '鉛筆(えんぴつ)が 折(お)れた のに、黙(だま)って いる 場面(ばめん)です。', goal: '先生(せんせい)に「貸(か)して ください」と 伝(つた)える ことが 大切(たいせつ)です。', title: '困(こま)った ときの 伝(つた)え方(かた)', panels: [{ scene: '鉛筆の芯が折れる', dialogue: '折(お)れちゃった。' }, { scene: '黙って下を向く', dialogue: 'どうしよう…。' }, { scene: '手を挙げる', dialogue: '先生(せんせい)を 呼(よ)ぼう。' }, { scene: '先生に伝える', dialogue: '貸(か)して ください！' }] },
+          { label: '大声を出してしまう', scenario: '図書室(としょかん)で、大(おお)きな 声(こえ)で 話(はな)す 場面(ばめん)です。', goal: '場所(ばしょ)に 合(あ)わせて、声(こえ)を 調(ちょう)せつ する ことが 大切(たいせつ)です。', title: '声(こえ)の 大(おお)きさ', panels: [{ scene: '図書室で大声を出す', dialogue: 'これ 面白(おもしろ)いよ！！' }, { scene: '周りがビックリする', dialogue: '（しーっ！）' }, { scene: '人差し指を立てる', dialogue: '静(しず)かに しなきゃ。' }, { scene: 'ヒソヒソ声で話す', dialogue: '（ひそひそ）面白(おもしろ)いね。' }] },
+          { label: '呼ばれても無視する', scenario: '名前(なまえ)を 呼(よ)ばれても 無視(むし)する 場面(ばめん)です。', goal: '呼(よ)ばれたら、相手(あいて)を 見(み)て 返事(へんじ)を する ことが 大切(たいせつ)です。', title: '名前(なまえ)を 呼(よ)ばれた とき', panels: [{ scene: '呼ばれてもブロック遊びに夢中', dialogue: '…………。' }, { scene: '嫌そうに振り向く', dialogue: '今(いま) 忙(いそが)しいのに。' }, { scene: '手を止めて先生を見る', dialogue: '相手(あいて)の 目(め)を 見(み)て。' }, { scene: '元気に返事をする', dialogue: '「はい！」' }] },
+          { label: '「やめて」と言えない', scenario: '嫌(いや)な ことを されても、言(い)えない 場面(ばめん)です。', goal: 'はっきりと「やめて」と 伝(つた)える ことが 大切(たいせつ)です。', title: '嫌(いや)な ことは 伝(つた)えよう', panels: [{ scene: 'ふざけて叩かれる', dialogue: '痛(いた)いっ！' }, { scene: '言い返せずに泣く', dialogue: 'うわーん…' }, { scene: 'キリッとした表情になる', dialogue: '伝(つた)わらないよ。' }, { scene: '「やめて」と強く言う', dialogue: '痛(いた)いから やめて！' }] }
+        ]
+      };
+
+      const formatTextForPrompt = (text, style) => {
+        if (!text) return "";
+        const regex = /([一-龠々]+)[(（]([\u3040-\u309F\u30A0-\u30FFー]+)[)）]/g;
+        if (style === 'hiragana') return text.replace(regex, '$2');
+        if (style === 'kanji') return text.replace(regex, '$1');
+        return text;
+      };
+
+      const renderText = (text) => {
+        if (!text) return "";
+        const regex = /([一-龠々]+)[(（]([\u3040-\u309F\u30A0-\u30FFー]+)[)）]/g;
+        let processedText = text;
+        if (textStyle === 'hiragana') processedText = text.replace(regex, '$2');
+        else if (textStyle === 'kanji') processedText = text.replace(regex, '$1');
+        else {
+          const parts = text.split(regex);
+          if (parts.length === 1) return text;
+          const result = [];
+          for (let i = 0; i < parts.length; i++) {
+            if (i % 3 === 0) {
+              result.push(<React.Fragment key={i}>{parts[i]}</React.Fragment>);
+            } else if (i % 3 === 1) {
+              const kanji = parts[i];
+              const kana = parts[i + 1];
+              result.push(
+                <ruby key={i}>
+                  {kanji}<rt>{kana}</rt>
+                </ruby>
+              );
+              i++; 
+            }
+          }
+          return result;
+        }
+        return processedText;
+      };
+
+      useEffect(() => {
+        if (step === 'preview' && elements.length === 0) {
+          const initialElements = [
+            { id: 'badge', type: 'text', text: textStyle === 'hiragana' ? 'じりつかつどう' : '自立活動', x: 10, y: 10, width: 150, height: 46, fontSize: 18, fontWeight: 'bold', bg: '#fef08a', border: true, borderRadius: 8, align: 'center' },
+            { id: 'nameField', type: 'text', text: 'なまえ：', x: 400, y: 10, width: 308, height: 46, fontSize: 18, borderBottom: true, align: 'left' },
+            { id: 'title', type: 'text', text: worksheetTitle, x: 10, y: 70, width: 698, height: 70, fontSize: 28, fontWeight: 'black', align: 'center' },
+            { id: 'scenario', type: 'text', text: scenario + (textStyle === 'hiragana' ? ' （　）に あてはまる ことばを かんがえましょう。' : ' （　）に あてはまる 言葉(ことば)を 考(かんが)えましょう。'), x: 10, y: 150, width: 698, height: 50, fontSize: 16, align: 'center' },
+            { id: 'mangaImage', type: 'manga_placeholder', src: null, x: 10, y: 210, width: 698, height: 690 },
+            { id: 'goal', type: 'text', text: (textStyle === 'hiragana' ? 'ぽいんと：' : 'ポイント：') + customGoal, x: 10, y: 920, width: 698, height: 90, fontSize: 16, fontWeight: 'bold', border: true, borderRadius: 16, padding: 15, borderColor: '#334155', bg: '#fffbeb' }
+          ];
+          setElements(initialElements);
+        }
+      }, [step]);
+
+      const containerRef = useRef(null);
+
+      const handlePointerDown = (e, id, action) => {
+        if (step !== 'preview') return;
+        e.stopPropagation();
+        setSelectedId(id);
+        const el = elements.find(e => e.id === id);
+        if (!el) return;
+
+        setDragInfo({
+          id, action,
+          startX: e.clientX, startY: e.clientY,
+          origX: el.x, origY: el.y,
+          origW: el.width, origH: el.height
+        });
+      };
+
+      useEffect(() => {
+        const handlePointerMove = (e) => {
+          if (!dragInfo) return;
+          const dx = e.clientX - dragInfo.startX;
+          const dy = e.clientY - dragInfo.startY;
+
+          setElements(prev => prev.map(el => {
+            if (el.id === dragInfo.id) {
+              if (dragInfo.action === 'move') {
+                return { ...el, x: dragInfo.origX + dx, y: dragInfo.origY + dy };
+              } else if (dragInfo.action === 'resize') {
+                return { ...el, width: Math.max(50, dragInfo.origW + dx), height: Math.max(30, dragInfo.origH + dy) };
+              }
+            }
+            return el;
+          }));
+        };
+
+        const handlePointerUp = () => {
+          if (dragInfo) setDragInfo(null);
+        };
+
+        window.addEventListener('pointermove', handlePointerMove);
+        window.addEventListener('pointerup', handlePointerUp);
+        return () => {
+          window.removeEventListener('pointermove', handlePointerMove);
+          window.removeEventListener('pointerup', handlePointerUp);
+        };
+      }, [dragInfo]);
+
+      const updateElement = (id, changes) => {
+        setElements(prev => prev.map(el => el.id === id ? { ...el, ...changes } : el));
+      };
+
+      const deleteElement = (id) => {
+        setElements(prev => prev.filter(el => el.id !== id));
+        setSelectedId(null);
+      };
+
+      const addNewText = () => {
+        const newEl = {
+          id: `text_${Date.now()}`,
+          type: 'text',
+          text: '新しいテキスト',
+          x: 100, y: 100, width: 200, height: 50,
+          fontSize: 16,
+          align: 'left'
+        };
+        setElements([...elements, newEl]);
+        setSelectedId(newEl.id);
+      };
+
+      const handleImageUpload = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = (event) => {
+            const newEl = {
+              id: `image_${Date.now()}`,
+              type: 'image',
+              src: event.target.result,
+              x: 100, y: 100, width: 300, height: 300
+            };
+            setElements([...elements, newEl]);
+            setSelectedId(newEl.id);
+          };
+          reader.readAsDataURL(file);
+        }
+      };
+
+      const handleSave = () => {
+        const data = {
+          targetDomain, targetItem, scenario, textStyle, customGoal, worksheetTitle, mangaData, elements
+        };
+        const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'jiritsu_print_data.json';
+        a.click();
+        URL.revokeObjectURL(url);
+        setShowCopyMessage(true);
+        setTimeout(() => setShowCopyMessage(false), 2000);
+      };
+
+      const handleLoad = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          try {
+            const data = JSON.parse(event.target.result);
+            if(data.targetDomain) setTargetDomain(data.targetDomain);
+            if(data.targetItem) setTargetItem(data.targetItem);
+            if(data.scenario) setScenario(data.scenario);
+            if(data.textStyle) setTextStyle(data.textStyle);
+            if(data.customGoal) setCustomGoal(data.customGoal);
+            if(data.worksheetTitle) setWorksheetTitle(data.worksheetTitle);
+            if(data.mangaData) setMangaData(data.mangaData);
+            if(data.elements) setElements(data.elements);
+            setStep('preview');
+          } catch(err) {
+            setErrorMessage('ファイルの読み込みに失敗しました');
+          }
+        };
+        reader.readAsText(file);
+      };
+
+      const generatePromptText = () => {
+        let textStyleInstruction = "";
+        if (textStyle === "ruby") {
+          textStyleInstruction = "Include small Furigana strictly placed above the Kanji characters.";
+        } else if (textStyle === "hiragana") {
+          textStyleInstruction = "Use ONLY Japanese Hiragana characters. ABSOLUTELY NO Kanji.";
+        } else {
+          textStyleInstruction = "Use standard Japanese text.";
+        }
+
+        return `Create a page of a Japanese educational manga with 4 panels arranged in a 2x2 grid.
+Style: Clean anime illustration, child-friendly, Japanese elementary school textbook style.
+
+CRITICAL INSTRUCTION:
+Draw white speech bubbles containing the EXACT Japanese dialogue provided below. ${textStyleInstruction}
+Do NOT write Panel numbers or Visual Scene descriptions in the drawing.
+
+Theme: ${formatTextForPrompt(targetDomain, 'kanji')}
+
+Panel 1:
+Scene: ${formatTextForPrompt(mangaData.panels[0].scene, 'kanji')}
+Speech: "${formatTextForPrompt(mangaData.panels[0].dialogue, textStyle)}"
+
+Panel 2:
+Scene: ${formatTextForPrompt(mangaData.panels[1].scene, 'kanji')}
+Speech: "${formatTextForPrompt(mangaData.panels[1].dialogue, textStyle)}"
+
+Panel 3:
+Scene: ${formatTextForPrompt(mangaData.panels[2].scene, 'kanji')}
+Speech: "${formatTextForPrompt(mangaData.panels[2].dialogue, textStyle)}"
+
+Panel 4:
+Scene: ${formatTextForPrompt(mangaData.panels[3].scene, 'kanji')}
+Speech: "${formatTextForPrompt(mangaData.panels[3].dialogue, textStyle)}"`;
+      };
+
+      const handleGenerateComic = async () => {
+        setIsGeneratingImage(true);
+        setErrorMessage(null);
+
+        const apiKey = "";
+        const promptText = generatePromptText();
+
+        try {
+          let retries = 0;
+          const maxRetries = 5;
+          let response;
+          while (retries < maxRetries) {
+            response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent?key=${apiKey}`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                contents: [{ parts: [{ text: promptText }] }],
+                generationConfig: { responseModalities: ["IMAGE"] }
+              })
+            });
+            if (response.ok) break;
+            retries++;
+            await new Promise(r => setTimeout(r, Math.pow(2, retries) * 1000));
+          }
+          
+          if (!response.ok) throw new Error('API Error');
+          const result = await response.json();
+          const base64Data = result.candidates?.[0]?.content?.parts?.find(p => p.inlineData)?.inlineData?.data;
+          if (!base64Data) throw new Error('No Image');
+          
+          const imageUrl = `data:image/png;base64,${base64Data}`;
+          
+          setElements(prev => prev.map(el => el.type === 'manga_placeholder' ? { ...el, src: imageUrl } : el));
+
+        } catch(err) {
+          console.error(err);
+          setErrorMessage(`画像生成に失敗しました。時間をおいて再度お試しください。`);
+        } finally {
+          setIsGeneratingImage(false);
+        }
+      };
+
+      return (
+        <div className={step === 'preview' ? "w-full min-h-screen bg-slate-800 font-sans print:bg-white print:p-0 flex flex-col items-center" : "fixed inset-0 bg-slate-100 flex items-center justify-center overflow-hidden font-sans select-none touch-none"}>
+          
+          {errorMessage && (
+            <div className="fixed top-20 left-1/2 -translate-x-1/2 bg-red-600 text-white px-8 py-4 rounded-full font-bold flex items-center gap-3 z-[500] shadow-2xl animate-in fade-in slide-in-from-top-4">
+              <AlertCircle className="w-6 h-6" />
+              <span>{errorMessage}</span>
+              <button onClick={() => setErrorMessage(null)} className="ml-4 hover:text-red-200"><X className="w-5 h-5"/></button>
+            </div>
+          )}
+
+          {step !== 'preview' ? (
+            <div 
+              id="app-container"
+              className="bg-white shadow-2xl relative overflow-hidden"
+              style={{ width: BASE_WIDTH, height: BASE_HEIGHT, transform: `scale(${scale})`, transformOrigin: 'center center' }}
+            >
+              {step !== 'environment_check' && (
+                <div className="h-16 bg-slate-800 text-white flex items-center px-6 justify-between shadow-md">
+                  <div className="flex items-center gap-4">
+                    <Layout className="text-blue-400 w-6 h-6" />
+                    <h1 className="text-xl font-bold tracking-tight">自立活動プリントメーカー</h1>
+                    <button onClick={() => setStep('environment_check')} className="ml-4 text-xs text-slate-300 hover:text-white underline">モード選択に戻る</button>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    {isOfflineEnvironment ? (
+                      <span className="text-xs bg-slate-700 px-3 py-1 rounded-full text-slate-300 font-bold border border-slate-600">校務PC (オフライン) モード</span>
+                    ) : (
+                      <span className="text-xs bg-blue-900 px-3 py-1 rounded-full text-blue-300 font-bold border border-blue-700">オンライン (AI画像生成) モード</span>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              <div className="flex flex-col h-[calc(100%-64px)] p-6">
+                {step === 'environment_check' && (
+                  <div className="flex flex-col h-full items-center justify-center animate-in fade-in">
+                    <div className="text-center mb-10">
+                      <h2 className="text-4xl font-black text-slate-800 mb-4 tracking-tight">使用環境を選択してください</h2>
+                    </div>
+                    <div className="flex gap-8">
+                      <button 
+                        onClick={() => { setIsOfflineEnvironment(false); setStep('domain_selection'); }}
+                        className="w-80 h-64 bg-slate-50 border-[6px] border-blue-100 hover:border-blue-600 rounded-[40px] flex flex-col items-center justify-center gap-4 shadow-xl group"
+                      >
+                        <ImageIcon className="w-16 h-16 text-blue-600" />
+                        <span className="text-2xl font-black">iPad / 個人のPC</span>
+                        <span className="text-xs font-bold text-blue-500 mt-1 bg-blue-100 px-3 py-1 rounded-full">アプリ内で画像を自動生成</span>
+                      </button>
+                      <button 
+                        onClick={() => { setIsOfflineEnvironment(true); setStep('domain_selection'); }}
+                        className="w-80 h-64 bg-slate-50 border-[6px] border-slate-200 hover:border-slate-800 rounded-[40px] flex flex-col items-center justify-center gap-4 shadow-xl group"
+                      >
+                        <Printer className="w-16 h-16 text-slate-600" />
+                        <span className="text-2xl font-black">学校の校務用PC</span>
+                        <span className="text-xs font-bold text-slate-500 mt-1 bg-slate-200 px-3 py-1 rounded-full">画像は外部AIで作成して印刷</span>
+                      </button>
+                    </div>
+                    <div className="mt-10">
+                      <label className="cursor-pointer px-6 py-3 bg-slate-200 text-slate-700 rounded-full font-bold shadow hover:bg-slate-300 flex items-center gap-2">
+                        <FolderOpen className="w-5 h-5" /> 保存したデータを開く
+                        <input type="file" accept=".json" onChange={handleLoad} className="hidden" />
+                      </label>
+                    </div>
+                  </div>
+                )}
+
+                {step === 'domain_selection' && (
+                  <div className="flex flex-col h-full animate-in fade-in">
+                    <h2 className="text-2xl font-bold text-slate-800 mb-4 border-l-4 border-blue-600 pl-3">指導する領域（6区分27項目）</h2>
+                    <div className="flex-1 grid grid-cols-2 gap-4">
+                      <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 overflow-y-auto">
+                        {domainData.map((d) => (
+                          <button key={d.name} onClick={() => setTargetDomain(d.name)} className={`w-full text-left p-4 rounded-lg font-bold mb-2 ${targetDomain === d.name ? 'bg-blue-600 text-white' : 'bg-white border text-slate-700'}`}>{d.name}</button>
+                        ))}
+                      </div>
+                      <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 overflow-y-auto">
+                        {targetDomain && domainData.find(d => d.name === targetDomain)?.items.map((item) => (
+                          <button key={item} onClick={() => { setTargetItem(item); setStep('scenario_input'); }} className="w-full text-left p-4 rounded-lg font-bold mb-2 bg-white flex justify-between items-center group shadow-sm hover:border-blue-500 border border-transparent">
+                            <span className="text-sm">{item}</span><ChevronRight className="w-5 h-5 text-slate-300" />
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {step === 'scenario_input' && (
+                  <div className="flex flex-col h-full animate-in fade-in">
+                    <div className="flex justify-between items-center mb-4">
+                      <h2 className="text-2xl font-bold text-slate-800 border-l-4 border-blue-600 pl-3">プリントの内容設定</h2>
+                      <button onClick={() => setStep('domain_selection')} className="px-4 py-2 bg-slate-100 rounded-lg font-bold text-sm">戻る</button>
+                    </div>
+                    <div className="grid grid-cols-2 gap-6 flex-1 min-h-0">
+                      <div className="bg-white rounded-xl border border-slate-200 flex flex-col overflow-hidden">
+                        <div className="bg-slate-100 p-3 border-b font-bold text-sm text-slate-700">「{targetDomain}」のよくある事例（全30事例）</div>
+                        <div className="p-3 overflow-y-auto flex-1 bg-slate-50">
+                          {presetScenarios[targetDomain]?.map((issue, idx) => (
+                            <button key={idx} onClick={() => { setScenario(issue.scenario); setCustomGoal(issue.goal); setWorksheetTitle(issue.title); setMangaData({ panels: [...issue.panels] }); }} className="w-full text-left bg-white p-3 rounded-lg border-2 hover:border-blue-500 mb-2 shadow-sm">
+                              <div className="font-bold text-sm mb-1">{issue.label}</div>
+                              <div className="text-[10px] text-slate-500">{issue.goal.replace(/([一-龠々]+)[(（]([\u3040-\u309F\u30A0-\u30FFー]+)[)）]/g, '$1')}</div>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                      <div className="flex flex-col gap-4 overflow-y-auto pr-2">
+                        <div className="bg-blue-50 text-blue-800 p-3 rounded-xl text-xs font-bold border border-blue-200">
+                          【重要】漢字の直後にカッコで読みを書いてください。<br/>〇 正しい例： 食事(しょくじ)に 行(い)く
+                        </div>
+                        <div><label className="block text-sm font-bold mb-1">タイトル</label><input type="text" value={worksheetTitle} onChange={(e) => setWorksheetTitle(e.target.value)} className="w-full p-2 border rounded font-bold" /></div>
+                        <div><label className="block text-sm font-bold mb-1">説明文</label><textarea value={scenario} onChange={(e) => setScenario(e.target.value)} className="w-full p-2 h-16 border rounded text-sm resize-none" /></div>
+                        <div><label className="block text-sm font-bold mb-1">ねらい</label><textarea value={customGoal} onChange={(e) => setCustomGoal(e.target.value)} className="w-full p-2 h-16 border rounded text-sm resize-none" /></div>
+                        <button onClick={() => setStep('manual_edit')} disabled={!scenario || !worksheetTitle} className={`mt-auto py-4 rounded-xl text-lg font-bold shadow-md flex justify-center items-center gap-2 ${!scenario || !worksheetTitle ? 'bg-slate-200' : 'bg-blue-600 text-white'}`}>次へ <ChevronRight /></button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {step === 'manual_edit' && (
+                  <div className="flex flex-col h-full animate-in fade-in">
+                    <div className="flex justify-between items-center mb-4">
+                      <h2 className="text-2xl font-bold text-slate-800 border-l-4 border-blue-600 pl-3">各コマのセリフと絵の指示</h2>
+                      <select value={textStyle} onChange={(e) => setTextStyle(e.target.value)} className="p-1 border rounded text-sm font-bold bg-yellow-50 outline-none">
+                        <option value="ruby">漢字（ルビあり）</option>
+                        <option value="hiragana">すべてひらがな</option>
+                        <option value="kanji">漢字（ルビなし）</option>
+                      </select>
+                    </div>
+                    <div className="grid grid-cols-4 gap-4 flex-1 overflow-hidden">
+                      {mangaData.panels.map((panel, idx) => (
+                        <div key={idx} className="bg-white border rounded-xl overflow-hidden flex flex-col shadow-sm">
+                          <div className="bg-slate-100 p-2 font-bold text-center text-sm border-b">コマ {idx + 1}</div>
+                          <div className="p-3 space-y-3 flex flex-col h-full">
+                            <div className="flex-1 flex flex-col"><label className="text-[10px] font-bold mb-1">絵の指示</label><textarea value={panel.scene} onChange={(e) => { const newPanels = [...mangaData.panels]; newPanels[idx].scene = e.target.value; setMangaData({...mangaData, panels: newPanels}); }} className="flex-1 w-full p-2 border rounded bg-slate-50 text-xs resize-none" /></div>
+                            <div className="flex-1 flex flex-col"><label className="text-[10px] font-bold text-blue-600 mb-1">セリフ</label><textarea value={panel.dialogue} onChange={(e) => { const newPanels = [...mangaData.panels]; newPanels[idx].dialogue = e.target.value; setMangaData({...mangaData, panels: newPanels}); }} className="flex-1 w-full p-2 border-2 border-blue-100 rounded text-sm font-bold resize-none" /></div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="mt-4 flex justify-between">
+                      <button onClick={() => setStep('scenario_input')} className="px-6 py-2 border rounded-lg font-bold">戻る</button>
+                      <button onClick={() => { setElements([]); setStep('preview'); }} className="px-12 py-3 bg-green-600 text-white rounded-lg text-lg font-bold flex items-center gap-2 shadow-md hover:bg-green-700">キャンバスエディタへ</button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          ) : (
+            // --- Step 5: キャンバスエディタ ---
+            <>
+              <div className="w-[794px] bg-white p-4 rounded-t-xl shadow-lg border-b border-slate-200 flex justify-between items-center no-print z-50 sticky top-0 mt-4">
+                <div className="flex items-center gap-2">
+                  <button onClick={() => setStep('manual_edit')} className="px-3 py-1.5 bg-slate-100 text-slate-700 rounded font-bold text-sm hover:bg-slate-200 flex items-center gap-1"><ChevronLeft className="w-4 h-4"/> 戻る</button>
+                  <div className="h-6 w-px bg-slate-300 mx-1"></div>
+                  <button onClick={addNewText} className="px-3 py-1.5 bg-slate-100 rounded font-bold text-sm hover:bg-slate-200 flex items-center gap-1"><Type className="w-4 h-4"/> テキスト</button>
+                  <label className="px-3 py-1.5 bg-slate-100 rounded font-bold text-sm hover:bg-slate-200 flex items-center gap-1 cursor-pointer">
+                    <ImageIcon className="w-4 h-4"/> 画像
+                    <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
+                  </label>
+                  <div className="h-6 w-px bg-slate-300 mx-1"></div>
+                  <button onClick={handleSave} className="px-3 py-1.5 bg-blue-50 text-blue-700 border border-blue-200 rounded font-bold text-sm hover:bg-blue-100 flex items-center gap-1"><Save className="w-4 h-4"/> 保存</button>
+                  <label className="px-3 py-1.5 bg-blue-50 text-blue-700 border border-blue-200 rounded font-bold text-sm hover:bg-blue-100 flex items-center gap-1 cursor-pointer">
+                    <FolderOpen className="w-4 h-4"/> 読込
+                    <input type="file" accept=".json" onChange={handleLoad} className="hidden" />
+                  </label>
+                  <button onClick={() => setBindingMargin(!bindingMargin)} className={`px-3 py-1.5 rounded font-bold text-sm border flex items-center gap-1 ${bindingMargin ? 'bg-blue-100 text-blue-700 border-blue-300' : 'bg-slate-100 text-slate-600 border-transparent hover:bg-slate-200'}`}>
+                    <FileBox className="w-4 h-4" />とじ代
+                  </button>
+                </div>
+                
+                <div className="flex items-center gap-2">
+                  {selectedId && (
+                    <>
+                      <button onClick={() => updateElement(selectedId, { fontSize: (elements.find(e=>e.id===selectedId)?.fontSize || 16) + 2 })} className="p-1.5 hover:bg-slate-100 rounded text-slate-600"><ZoomIn className="w-4 h-4"/></button>
+                      <button onClick={() => updateElement(selectedId, { fontSize: Math.max(10, (elements.find(e=>e.id===selectedId)?.fontSize || 16) - 2) })} className="p-1.5 hover:bg-slate-100 rounded text-slate-600"><ZoomOut className="w-4 h-4"/></button>
+                      <button onClick={() => deleteElement(selectedId)} className="p-1.5 hover:bg-red-100 text-red-600 rounded"><Trash2 className="w-4 h-4"/></button>
+                      <div className="h-6 w-px bg-slate-300 mx-1"></div>
+                    </>
+                  )}
+                  <button onClick={() => setShowPromptModal(true)} className="px-3 py-1.5 bg-slate-100 text-slate-600 rounded font-bold text-sm hover:bg-slate-200">プロンプト</button>
+                  <button onClick={() => { setSelectedId(null); setTimeout(()=>window.print(), 100); }} className="px-4 py-1.5 bg-slate-800 text-white rounded font-bold text-sm flex items-center gap-1 shadow-sm hover:bg-black"><Printer className="w-4 h-4"/> 印刷</button>
+                </div>
+              </div>
+
+              <div className="w-full flex-1 overflow-auto flex justify-center py-6 print:p-0 print:overflow-hidden bg-slate-200 print:bg-white">
+                
+                <div 
+                  id="print-wrapper"
+                  className="print:w-[210mm] print:h-[295mm] print:m-0 print:box-border print:overflow-hidden print:bg-white transition-all duration-300"
+                  style={{ marginLeft: bindingMargin ? '60px' : '0px' }}
+                >
+                  
+                  <div 
+                    id="print-area" 
+                    ref={containerRef}
+                    className="bg-white shadow-2xl relative print:shadow-none"
+                    style={{ width: '718px', height: '1020px' }}
+                    onPointerDown={() => setSelectedId(null)}
+                  >
+                    {elements.map(el => {
+                      const baseBorder = el.border ? `3px solid ${el.borderColor || '#1e293b'}` : 'none';
+                      const bottomBorder = el.borderBottom ? `3px solid #1e293b` : baseBorder;
+
+                      return (
+                        <div
+                          key={el.id}
+                          className={`absolute group ${selectedId === el.id ? 'z-50' : 'z-10'}`}
+                          style={{
+                            left: el.x, top: el.y, width: el.width, height: el.height,
+                            backgroundColor: el.bg || 'transparent',
+                            boxSizing: 'border-box',
+                            borderTop: baseBorder,
+                            borderRight: baseBorder,
+                            borderLeft: baseBorder,
+                            borderBottom: bottomBorder,
+                            borderRadius: el.borderRadius || 0,
+                            padding: el.padding || 0,
+                            cursor: selectedId === el.id ? 'move' : 'pointer',
+                            outline: selectedId === el.id ? '2px solid #3b82f6' : 'none',
+                            outlineOffset: '2px'
+                          }}
+                          onPointerDown={(e) => handlePointerDown(e, el.id, 'move')}
+                        >
+                          {el.type === 'text' && (
+                            <div className="w-full h-full p-1" style={{ textAlign: el.align }}>
+                              {selectedId === el.id && isEditingTextId === el.id ? (
+                                <textarea 
+                                  autoFocus
+                                  value={el.text}
+                                  onChange={(e) => updateElement(el.id, { text: e.target.value })}
+                                  onBlur={() => setIsEditingTextId(null)}
+                                  className="w-full h-full bg-transparent border-none outline-none resize-none overflow-hidden text-blue-800"
+                                  style={{ textAlign: el.align, fontSize: el.fontSize, fontWeight: el.fontWeight }}
+                                />
+                              ) : (
+                                <div 
+                                  className="w-full break-all whitespace-pre-wrap inline-block" 
+                                  onDoubleClick={(e) => { e.stopPropagation(); setIsEditingTextId(el.id); }} 
+                                  style={{ fontSize: el.fontSize, fontWeight: el.fontWeight, lineHeight: 1.8 }}
+                                >
+                                  {renderText(el.text)}
+                                </div>
+                              )}
+                            </div>
+                          )}
+
+                          {el.type === 'image' && (
+                            <img src={el.src} alt="" className="w-full h-full object-contain pointer-events-none" />
+                          )}
+
+                          {el.type === 'manga_placeholder' && (
+                            <div className="w-full h-full relative bg-slate-50 flex items-center justify-center overflow-hidden box-border">
+                              {el.src ? (
+                                <img src={el.src} alt="Manga" className="w-full h-full object-contain pointer-events-none" />
+                              ) : (
+                                <div className="text-center text-slate-400">
+                                  <ImageIcon className="w-16 h-16 mx-auto mb-2 opacity-50" />
+                                  <span className="font-bold text-sm">{textStyle === 'hiragana' ? 'AIで つくった えを ここに はります' : 'AIで生成した画像をここに配置します'}</span>
+                                </div>
+                              )}
+                              {!isOfflineEnvironment && (
+                                <button 
+                                  onPointerDown={(e) => e.stopPropagation()}
+                                  onClick={handleGenerateComic}
+                                  disabled={isGeneratingImage}
+                                  className="absolute bottom-4 right-4 px-4 py-2 bg-blue-600 text-white rounded-full font-bold shadow-lg z-50 text-sm flex items-center gap-2 hover:bg-blue-700 no-print"
+                                >
+                                  {isGeneratingImage ? <RefreshCcw className="w-4 h-4 animate-spin" /> : <ImageIcon className="w-4 h-4" />}
+                                  {isGeneratingImage ? '生成中...' : '画像を自動生成'}
+                                </button>
+                              )}
+                            </div>
+                          )}
+
+                          {selectedId === el.id && (
+                            <div 
+                              className="absolute -right-2 -bottom-2 w-4 h-4 bg-white border-2 border-blue-500 rounded-full cursor-se-resize z-50 no-print"
+                              onPointerDown={(e) => handlePointerDown(e, el.id, 'resize')}
+                            />
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
+
+          {showPromptModal && (
+            <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[200] p-6 no-print">
+              <div className="bg-white rounded-3xl w-full max-w-2xl overflow-hidden flex flex-col shadow-2xl">
+                <div className="p-4 bg-slate-800 text-white flex justify-between items-center">
+                  <h2 className="text-lg font-bold flex items-center gap-2"><ImageIcon className="w-5 h-5"/> セリフ入りイラスト生成用プロンプト</h2>
+                  <button onClick={() => setShowPromptModal(false)} className="p-1 hover:bg-white/20 rounded"><X/></button>
+                </div>
+                <div className="p-6 bg-slate-50 text-sm text-slate-600">
+                  <p className="mb-4 font-bold text-blue-700">外部AI（ChatGPT等）に以下の英文をそのまま貼り付けてください。</p>
+                  <textarea 
+                    readOnly 
+                    value={generatePromptText()}
+                    className="w-full h-56 p-4 bg-white border border-slate-300 rounded-lg font-mono text-[10px] focus:outline-none"
+                  />
+                </div>
+                <div className="p-4 bg-white border-t flex justify-end gap-3">
+                  <button onClick={() => setShowPromptModal(false)} className="px-4 py-2 border rounded font-bold text-slate-600">閉じる</button>
+                  <button 
+                    onClick={() => { copyToClipboard(generatePromptText()); setShowPromptModal(false); }}
+                    className="px-6 py-2 bg-blue-600 text-white rounded font-bold flex items-center gap-2"
+                  >
+                    <Copy className="w-4 h-4"/> コピーする
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {showCopyMessage && (
+            <div className="fixed bottom-10 left-1/2 -translate-x-1/2 bg-slate-800 text-white px-6 py-3 rounded-full font-bold flex items-center gap-2 z-[300] shadow-xl">
+              <CheckCircle2 className="w-5 h-5 text-green-400" /> 保存/コピーしました
+            </div>
+          )}
+
+          <style>{"\
+            ruby { ruby-align: center; ruby-position: over; vertical-align: baseline; }\n\
+            rt { font-size: 0.6em; color: #334155; font-weight: bold; }\n\
+            @media print {\n\
+              html, body {\n\
+                width: 210mm !important;\n\
+                height: 295mm !important;\n\
+                margin: 0 !important;\n\
+                padding: 0 !important;\n\
+                overflow: hidden !important;\n\
+                background-color: white !important;\n\
+              }\n\
+              .no-print, .no-print * { display: none !important; }\n\
+              body > *:not(#root) { display: none !important; }\n\
+              #root, #app-container, .fixed.inset-0 {\n\
+                position: static !important;\n\
+                width: 210mm !important;\n\
+                height: 295mm !important;\n\
+                overflow: hidden !important;\n\
+                display: block !important;\n\
+                background: white !important;\n\
+                transform: none !important;\n\
+                margin: 0 !important;\n\
+                padding: 0 !important;\n\
+              }\n\
+              #print-wrapper {\n\
+                display: block !important;\n\
+                position: relative !important;\n\
+                width: 210mm !important;\n\
+                height: 295mm !important;\n\
+                margin: 0 !important;\n\
+                padding: 0 !important;\n\
+                box-sizing: border-box !important;\n\
+                overflow: hidden !important;\n\
+                page-break-after: avoid !important;\n\
+                page-break-before: avoid !important;\n\
+                page-break-inside: avoid !important;\n\
+              }\n\
+              #print-area { \n\
+                position: absolute !important;\n\
+                top: 10mm !important; \n\
+                left: " + (bindingMargin ? '25mm' : '10mm') + " !important; \n\
+                margin: 0 !important; \n\
+                padding: 0 !important;\n\
+                transform-origin: top left !important;\n\
+                transform: scale(" + (bindingMargin ? 0.92 : 0.98) + ") !important;\n\
+                box-shadow: none !important; \n\
+                overflow: visible !important;\n\
+                background-color: transparent !important;\n\
+              }\n\
+              @page { size: A4 portrait; margin: 0; }\n\
+            }\n\
+          "}</style>
+        </div>
+      );
+    };
+
+    const root = createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>
