@@ -84,7 +84,7 @@
 
   <script type="text/babel">
     const { useState, useEffect, useRef } = React;
-    const { createRoot } = ReactDOM;
+    const { createRoot, flushSync } = ReactDOM;
 
     const App = () => {
       const [step, setStep] = useState('environment_check');
@@ -123,6 +123,10 @@
 
       const CANVAS_W = 794;
       const CANVAS_H = 1123;
+      
+      // テキスト編集用のRef
+      const textAreaRef = useRef(null);
+      const lastTapInfo = useRef({ id: null, time: 0 });
 
       useEffect(() => {
         document.body.style.backgroundColor = step === 'preview' ? '#e2e8f0' : '#0f172a';
@@ -238,10 +242,39 @@
         setStep('preview');
       };
 
+      // 編集開始処理 (iOSのキーボード起動対応)
+      const startEditing = (id) => {
+        if (typeof flushSync === 'function') {
+          flushSync(() => {
+            setIsEditingTextId(id);
+          });
+          if (textAreaRef.current) textAreaRef.current.focus();
+        } else {
+          setIsEditingTextId(id);
+          setTimeout(() => {
+            if (textAreaRef.current) textAreaRef.current.focus();
+          }, 50);
+        }
+      };
+
       const handlePointerDown = (e, id, action) => {
         if (step !== 'preview') return;
+        
+        // テキスト編集中はドラッグを開始しない
+        if (isEditingTextId === id && action === 'move') return;
+
         e.stopPropagation();
         e.target.setPointerCapture(e.pointerId);
+
+        // ダブルタップ判定
+        if (action === 'move') {
+          const now = Date.now();
+          if (lastTapInfo.current.id === id && now - lastTapInfo.current.time < 500) {
+            startEditing(id);
+          }
+          lastTapInfo.current = { id, time: now };
+        }
+
         setSelectedId(id);
         const el = elements.find(e => e.id === id);
         if (!el) return;
@@ -272,7 +305,26 @@
 
       const updateElement = (id, changes) => setElements(prev => prev.map(el => el.id === id ? { ...el, ...changes } : el));
       const deleteElement = (id) => { setElements(prev => prev.filter(el => el.id !== id)); setSelectedId(null); };
-      const addNewText = () => { const newEl = { id: `text_${Date.now()}`, type: 'text', text: '新しいテキスト', x: 100, y: 100, width: 200, height: 60, fontSize: 18, align: 'left', padding: 8 }; setElements([...elements, newEl]); setSelectedId(newEl.id); };
+      
+      const addNewText = () => { 
+        const newId = `text_${Date.now()}`;
+        const newEl = { id: newId, type: 'text', text: '新しいテキスト', x: 100, y: 100, width: 200, height: 60, fontSize: 18, align: 'left', padding: 8 }; 
+        
+        // 追加して即座に編集モードに移行（iOSキーボード対応）
+        if (typeof flushSync === 'function') {
+          flushSync(() => {
+            setElements([...elements, newEl]);
+            setSelectedId(newId);
+            setIsEditingTextId(newId);
+          });
+          if (textAreaRef.current) textAreaRef.current.focus();
+        } else {
+          setElements([...elements, newEl]);
+          setSelectedId(newId);
+          setIsEditingTextId(newId);
+          setTimeout(() => { if (textAreaRef.current) textAreaRef.current.focus(); }, 50);
+        }
+      };
 
       const handleImageUpload = (e) => {
         const file = e.target.files[0];
@@ -496,15 +548,31 @@ Speech: "${formatTextForPrompt(mangaData.panels[3].dialogue, textStyle)}"`;
                 borderRadius: `${borderRadius}px`, 
                 cursor: isPreviewMode ? 'move' : 'default', 
                 outline: isPreviewMode && selectedId === el.id ? '3px solid #3b82f6' : 'none', outlineOffset: '2px',
-                touchAction: isPreviewMode ? 'none' : 'auto' // タッチ操作時の誤スクロールを防止
+                touchAction: isPreviewMode ? 'none' : 'auto' 
               }} 
               onPointerDown={(e) => isPreviewMode && handlePointerDown(e, el.id, 'move')}>
               
               {el.type === 'text' && (
                 <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', boxSizing: 'border-box', padding: `${padding}px`, justifyContent: el.align === 'center' ? 'center' : 'flex-start' }}>
                   {isPreviewMode && selectedId === el.id && isEditingTextId === el.id ? 
-                    <textarea autoFocus value={el.text} onChange={(e) => updateElement(el.id, { text: e.target.value })} onBlur={() => setIsEditingTextId(null)} className="custom-scroll no-print" style={{ width: '100%', height: '100%', backgroundColor: 'transparent', outline: 'none', resize: 'none', border: 'none', textAlign: el.align, fontSize: `${fontSize}px`, fontWeight: el.fontWeight }} /> :
-                    <div onDoubleClick={() => isPreviewMode && setIsEditingTextId(el.id)} style={{ width: '100%', wordBreak: 'keep-all', whiteSpace: 'pre-wrap', display: 'block', textAlign: el.align, fontSize: `${fontSize}px`, fontWeight: el.fontWeight, lineHeight: 1.8 }}>{renderText(el.text)}</div>
+                    <textarea 
+                      ref={textAreaRef}
+                      autoFocus
+                      value={el.text} 
+                      onChange={(e) => updateElement(el.id, { text: e.target.value })} 
+                      onBlur={() => setIsEditingTextId(null)} 
+                      onPointerDown={(e) => e.stopPropagation()} // ドラッグ処理と競合させない
+                      onTouchStart={(e) => e.stopPropagation()} // iOSのイベント伝播防止
+                      className="custom-scroll no-print" 
+                      style={{ 
+                        width: '100%', height: '100%', backgroundColor: 'transparent', outline: 'none', resize: 'none', border: 'none', 
+                        textAlign: el.align, fontSize: `${fontSize}px`, fontWeight: el.fontWeight,
+                        userSelect: 'text', WebkitUserSelect: 'text', touchAction: 'auto', pointerEvents: 'auto' // iOS入力用の強制スタイル
+                      }} 
+                    /> :
+                    <div style={{ width: '100%', wordBreak: 'keep-all', whiteSpace: 'pre-wrap', display: 'block', textAlign: el.align, fontSize: `${fontSize}px`, fontWeight: el.fontWeight, lineHeight: 1.8 }}>
+                      {renderText(el.text)}
+                    </div>
                   }
                 </div>
               )}
@@ -514,7 +582,7 @@ Speech: "${formatTextForPrompt(mangaData.panels[3].dialogue, textStyle)}"`;
               {el.type === 'manga_placeholder' && (
                 <div style={{ width: '100%', height: '100%', position: 'relative', backgroundColor: '#f8fafc', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: `${16 * innerScale}px`, overflow: 'hidden', boxSizing: 'border-box', border: `${Math.max(1, 4 * innerScale)}px solid #1e293b` }}>
                   {el.src ? <img src={el.src} style={{ width: '100%', height: '100%', objectFit: 'contain', pointerEvents: 'none' }} alt="" /> : <div style={{ textAlign: 'center', color: '#cbd5e1' }} className="no-print"><i className="fas fa-image" style={{ fontSize: `${80 * innerScale}px`, opacity: 0.5 }}></i></div>}
-                  {isPreviewMode && <button onClick={handleGenerateComic} disabled={isGeneratingImage} className="no-print" style={{ position: 'absolute', bottom: '20px', right: '20px', backgroundColor: '#2563eb', color: 'white', padding: '10px 20px', borderRadius: '40px', fontWeight: 'bold', boxShadow: '0 10px 20px rgba(0,0,0,0.2)', display: 'flex', alignItems: 'center', gap: '10px', fontSize: '18px', border: 'none', cursor: 'pointer' }}>
+                  {isPreviewMode && <button onClick={handleGenerateComic} disabled={isGeneratingImage} className="no-print" style={{ position: 'absolute', bottom: '20px', right: '20px', backgroundColor: '#2563eb', color: 'white', padding: '10px 20px', borderRadius: '40px', fontWeight: 'bold', boxShadow: '0 10px 20px rgba(0,0,0,0.2)', display: 'flex', alignItems: 'center', gap: '10px', fontSize: '18px', border: 'none', cursor: 'pointer' }} onPointerDown={(e) => e.stopPropagation()}>
                     <i className={`fas fa-sync ${isGeneratingImage ? 'fa-spin' : ''}`}></i> Imagen 4.0で画像生成
                   </button>}
                 </div>
@@ -671,6 +739,9 @@ Speech: "${formatTextForPrompt(mangaData.panels[3].dialogue, textStyle)}"`;
                      
                      {selectedId && (
                         <div style={{ display: 'flex', gap: '4px', padding: '4px', backgroundColor: '#f1f5f9', borderRadius: '8px', border: '1px solid #cbd5e1' }}>
+                          {elements.find(e=>e.id===selectedId)?.type === 'text' && (
+                            <button onClick={() => startEditing(selectedId)} style={{ padding: '4px 8px', color: '#2563eb', border: 'none', background: 'none', cursor: 'pointer', fontWeight: 'bold' }}><i className="fas fa-edit"></i> 編集</button>
+                          )}
                           <button onClick={handleZoomInElement} style={{ padding: '4px 8px', color: '#475569', border: 'none', background: 'none', cursor: 'pointer' }}><i className="fas fa-plus"></i></button>
                           <button onClick={handleZoomOutElement} style={{ padding: '4px 8px', color: '#475569', border: 'none', background: 'none', cursor: 'pointer' }}><i className="fas fa-minus"></i></button>
                           <button onClick={() => deleteElement(selectedId)} style={{ padding: '4px 8px', color: '#ef4444', border: 'none', background: 'none', cursor: 'pointer' }}><i className="fas fa-trash"></i></button>
@@ -686,10 +757,11 @@ Speech: "${formatTextForPrompt(mangaData.panels[3].dialogue, textStyle)}"`;
                 <div className="custom-scroll" style={{ flex: 1, overflow: 'auto', display: 'flex', justifyContent: 'center', alignItems: 'flex-start', padding: '40px' }}>
                   <div style={{ width: `${CANVAS_W * zoom}px`, height: `${CANVAS_H * zoom}px`, position: 'relative' }}>
                     <div 
-                      className="bg-white shadow-2xl touch-none-area"
+                      className="bg-white shadow-2xl"
                       style={{
                         width: `${CANVAS_W}px`, height: `${CANVAS_H}px`, position: 'absolute', top: 0, left: 0,
-                        transformOrigin: 'top left', transform: `scale(${zoom})`
+                        transformOrigin: 'top left', transform: `scale(${zoom})`,
+                        touchAction: 'none' // キャンバス全体での不意のスクロールを完全に防止
                       }}
                       onPointerDown={() => setSelectedId(null)}
                     >
