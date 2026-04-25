@@ -126,7 +126,13 @@
 
       useEffect(() => {
         document.body.style.backgroundColor = step === 'preview' ? '#e2e8f0' : '#0f172a';
-      }, [step]);
+        if (step === 'preview') {
+          const cleanTitle = worksheetTitle ? worksheetTitle.replace(/[\(（][^\)）]+[\)）]/g, '').replace(/\s+/g, '') : '名称未設定';
+          document.title = `自プリ-${cleanTitle}`;
+        } else {
+          document.title = '自立活動プリントメーカー';
+        }
+      }, [step, worksheetTitle]);
 
       const domainData = [
         { name: '1．健康の保持', items: ['（1）生活のリズムや生活習慣の形成に関すること', '（2）病気の状態の理解と生活管理に関すること', '（3）身体各部の状態の理解と養護に関すること', '（4）障害の特性の理解と生活環境の調整に関すること', '（5）健康状態の維持・改善に関すること'] },
@@ -177,7 +183,7 @@
           { label: '先生の話を聞かない', scenario: '先生(せんせい)の 指示(しじ)を 聞(き)かずに 始(はじ)める 場面(ばめん)です。', goal: '最後(さいご)まで 聞(き)き、「はい」と 返(へん)じを する ことが 大切(たいせつ)です。', title: 'お話(はなし)の 聞(き)き方(かた)', panels: [{ scene: '先生が説明中に書き始める', dialogue: 'もう 書(か)こう！' }, { scene: '間違ったページをやる', dialogue: 'ここじゃ なかったの？' }, { scene: '手を膝に置いて話を聞く', dialogue: '最後(さいご)まで 聞(き)こう。' }, { scene: '返事をしてから書き始める', dialogue: '「はい！」始(はじ)めよう。' }] },
           { label: '困っているのに言えない', scenario: '鉛筆(えんぴつ)が 折(お)れた のに、黙(だま)って いる 場面(ばめん)です。', goal: '先生(せんせい)に「貸(か)して ください」と 伝(つた)える ことが 大切(たいせつ)です。', title: '困(こま)った ときの 伝(つた)え方(かた)', panels: [{ scene: '鉛筆の芯が折れる', dialogue: '折(お)れちゃった。' }, { scene: '黙って下を向く', dialogue: 'どうしよう…。' }, { scene: '手を挙げる', dialogue: '先生(せんせい)を 呼(よ)ぼう。' }, { scene: '先生に伝える', dialogue: '貸(か)して ください！' }] },
           { label: '大声を出してしまう', scenario: '図書室(としょかん)で、大(おお)きな 声(こえ)で 話(はな)す 場面(ばめん)です。', goal: '場所(ばしょ)に 合(あ)わせて、声(こえ)を 調(ちょう)せつ する ことが 大切(たいせつ)です。', title: '声(こえ)の 大(おお)きさ', panels: [{ scene: '図書室で大声を出す', dialogue: 'これ 面白(おもしろ)いよ！！' }, { scene: '周りがビックリする', dialogue: '（しーっ！）' }, { scene: '人差し指を立てる', dialogue: '静(しず)かに しなきゃ。' }, { scene: 'ヒソヒソ声で話す', dialogue: '（ひそひそ）面白(おもしろ)いね。' }] },
-          { label: '呼ばれても無視する', scenario: '名前(なまえ)を 呼(よ)ばれても 無視(むし)する 場面(ばめん)です。', goal: '呼(よ)ばれたら、相手(あいて)を 見(み)て 返事(へんじ)を する ことが 大切(たいせつ)です。', title: '名前(なまえ)を 呼(よ)ばれた とき', panels: [{ scene: '呼ばれてもブロック遊びに夢中', dialogue: '…………。' }, { scene: '嫌そうに振り向く', dialogue: '今(いま) 忙(いそが)しいのに。' }, { scene: '手を止めて先生を見る', dialogue: '相手(あいて)の 目(め)を 見(み)て。' }, { scene: '元気に返事をする', dialogue: '「はい！」' }] },
+          { label: '呼ばれても無視する', scenario: '名前(なまえ)を 呼(よ)ばれても 無視(むし)する 場面(ばめん)です。', goal: '呼(よ)ばれたら、相手(あいて)を 見(み)て 返(へん)じを する ことが 大切(たいせつ)です。', title: '名前(なまえ)を 呼(よ)ばれた とき', panels: [{ scene: '呼ばれてもブロック遊びに夢中', dialogue: '…………。' }, { scene: '嫌そうに振り向く', dialogue: '今(いま) 忙(いそが)しいのに。' }, { scene: '手を止めて先生を見る', dialogue: '相手(あいて)の 目(め)を 見(み)て。' }, { scene: '元気に返事をする', dialogue: '「はい！」' }] },
           { label: '「やめて」と言えない', scenario: '嫌(いや)な ことを されても、言(い)えない 場面(ばめん)です。', goal: 'はっきりと「やめて」と 伝(つた)える ことが 大切(たいせつ)です。', title: '嫌(いや)な ことは 伝(つた)えよう', panels: [{ scene: 'ふざけて叩かれる', dialogue: '痛(いた)いっ！' }, { scene: '言い返せずに泣く', dialogue: 'うわーん…' }, { scene: 'キリッとした表情になる', dialogue: '伝(つた)わらないよ。' }, { scene: '「やめて」と強く言う', dialogue: '痛(いた)いから やめて！' }] }
         ]
       };
@@ -443,6 +449,26 @@ Speech: "${formatTextForPrompt(mangaData.panels[3].dialogue, textStyle)}"`;
         } catch(err) { setErrorMessage(`画像生成に失敗しました。`); } finally { setIsGeneratingImage(false); }
       };
 
+      const handleZoomInElement = () => {
+        const el = elements.find(e => e.id === selectedId);
+        if (!el) return;
+        if (el.type === 'text') {
+          updateElement(selectedId, { fontSize: (el.fontSize || 16) + 2 });
+        } else {
+          updateElement(selectedId, { width: el.width * 1.1, height: el.height * 1.1 });
+        }
+      };
+
+      const handleZoomOutElement = () => {
+        const el = elements.find(e => e.id === selectedId);
+        if (!el) return;
+        if (el.type === 'text') {
+          updateElement(selectedId, { fontSize: Math.max(10, (el.fontSize || 16) - 2) });
+        } else {
+          updateElement(selectedId, { width: el.width * 0.9, height: el.height * 0.9 });
+        }
+      };
+
       const renderElements = (isPreviewMode) => {
         const innerScale = bindingMargin ? 0.88 : 1.0;
         const offsetX = bindingMargin ? 95 : 0; 
@@ -487,9 +513,21 @@ Speech: "${formatTextForPrompt(mangaData.panels[3].dialogue, textStyle)}"`;
               {el.type === 'manga_placeholder' && (
                 <div style={{ width: '100%', height: '100%', position: 'relative', backgroundColor: '#f8fafc', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: `${16 * innerScale}px`, overflow: 'hidden', boxSizing: 'border-box', border: `${Math.max(1, 4 * innerScale)}px solid #1e293b` }}>
                   {el.src ? <img src={el.src} style={{ width: '100%', height: '100%', objectFit: 'contain' }} alt="" /> : <div style={{ textAlign: 'center', color: '#cbd5e1' }} className="no-print"><i className="fas fa-image" style={{ fontSize: `${80 * innerScale}px`, opacity: 0.5 }}></i></div>}
-                  {isPreviewMode && <button onClick={handleGenerateComic} disabled={isGeneratingImage} className="no-print" style={{ position: 'absolute', bottom: '20px', right: '20px', backgroundColor: '#2563eb', color: 'white', padding: '10px 20px', borderRadius: '40px', fontWeight: 'bold', boxShadow: '0 10px 20px rgba(0,0,0,0.2)', display: 'flex', alignItems: 'center', gap: '10px', fontSize: '18px' }}>
+                  {isPreviewMode && <button onClick={handleGenerateComic} disabled={isGeneratingImage} className="no-print" style={{ position: 'absolute', bottom: '20px', right: '20px', backgroundColor: '#2563eb', color: 'white', padding: '10px 20px', borderRadius: '40px', fontWeight: 'bold', boxShadow: '0 10px 20px rgba(0,0,0,0.2)', display: 'flex', alignItems: 'center', gap: '10px', fontSize: '18px', border: 'none', cursor: 'pointer' }}>
                     <i className={`fas fa-sync ${isGeneratingImage ? 'fa-spin' : ''}`}></i> Imagen 4.0で画像生成
                   </button>}
+                </div>
+              )}
+
+              {isPreviewMode && selectedId === el.id && (
+                <div 
+                  className="no-print" 
+                  style={{ position: 'absolute', right: '-24px', bottom: '-24px', width: '48px', height: '48px', cursor: 'se-resize', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50, touchAction: 'none' }} 
+                  onPointerDown={(e) => handlePointerDown(e, el.id, 'resize')}
+                >
+                  <div style={{ width: '30px', height: '30px', backgroundColor: 'white', border: '3px solid #3b82f6', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#3b82f6', boxShadow: '0 5px 10px rgba(0,0,0,0.2)', pointerEvents: 'none' }}>
+                    <i className="fas fa-expand-alt" style={{ fontSize: '12px' }}></i>
+                  </div>
                 </div>
               )}
             </div>
@@ -576,17 +614,17 @@ Speech: "${formatTextForPrompt(mangaData.panels[3].dialogue, textStyle)}"`;
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}><label style={{ fontSize: '14px', fontWeight: 'bold', color: '#475569' }}>ポイント（ねらい）</label><textarea value={customGoal} onChange={(e) => setCustomGoal(e.target.value)} style={{ padding: '12px', border: '1px solid #cbd5e1', borderRadius: '12px', fontSize: '14px', height: '100px', resize: 'none', outline: 'none' }} /></div>
                   <div style={{ display: 'flex', gap: '16px', marginTop: 'auto' }}>
                     <button onClick={() => setStep('domain_selection')} style={{ padding: '16px 24px', backgroundColor: '#e2e8f0', color: '#475569', borderRadius: '12px', fontSize: '16px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', border: 'none' }}><i className="fas fa-chevron-left"></i> 戻る</button>
-                    <button onClick={() => setStep('manual_edit')} disabled={!scenario || !worksheetTitle} style={{ flex: 1, padding: '16px', backgroundColor: (!scenario || !worksheetTitle) ? '#cbd5e1' : '#2563eb', color: 'white', borderRadius: '12px', fontSize: '18px', fontWeight: 'bold', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', cursor: 'pointer', border: 'none' }}>次へ <i className="fas fa-chevron-right"></i></button>
+                    <button onClick={() => setStep('manual_edit')} disabled={!scenario || !worksheetTitle} style={{ flex: 1, padding: '16px', backgroundColor: (!scenario || !worksheetTitle) ? '#cbd5e1' : '#2563eb', color: 'white', borderRadius: '12px', fontSize: '18px', fontWeight: 'bold', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', cursor: (!scenario || !worksheetTitle) ? 'not-allowed' : 'pointer', border: 'none' }}>次へ <i className="fas fa-chevron-right"></i></button>
                   </div>
                 </div>
               </div>
             )}
 
             {step === 'manual_edit' && (
-              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '24px', height: '100%' }}>
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '24px' }}>
                 <div style={{ flexShrink: 0, display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
                   <select value={textStyle} onChange={(e) => setTextStyle(e.target.value)} style={{ padding: '10px 16px', fontSize: '14px', fontWeight: 'bold', border: '1px solid #cbd5e1', borderRadius: '8px', backgroundColor: '#fef08a', color: '#854d0e', outline: 'none', cursor: 'pointer' }}><option value="ruby">漢字（ルビあり）</option><option value="hiragana">すべてひらがな</option><option value="kanji">漢字（ルビなし）</option></select>
-                  <button onClick={handleGenerateScenario} disabled={isGeneratingScenario} style={{ padding: '10px 20px', fontSize: '14px', fontWeight: 'bold', backgroundColor: '#8b5cf6', color: 'white', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', border: 'none' }}><i className={`fas ${isGeneratingScenario ? 'fa-sync fa-spin' : 'fa-magic'}`}></i>{isGeneratingScenario ? '生成中...' : 'AIでコマを自動生成'}</button>
+                  <button onClick={handleGenerateScenario} disabled={isGeneratingScenario} style={{ padding: '10px 20px', fontSize: '14px', fontWeight: 'bold', backgroundColor: '#8b5cf6', color: 'white', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '8px', cursor: isGeneratingScenario ? 'wait' : 'pointer', border: 'none' }}><i className={`fas ${isGeneratingScenario ? 'fa-sync fa-spin' : 'fa-magic'}`}></i>{isGeneratingScenario ? '生成中...' : 'AIでコマを自動生成'}</button>
                 </div>
                 <div style={{ flex: 1, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', overflowY: 'auto', alignContent: 'start' }} className="custom-scroll">
                   {mangaData.panels.map((p, i) => (
@@ -598,8 +636,8 @@ Speech: "${formatTextForPrompt(mangaData.panels[3].dialogue, textStyle)}"`;
                   ))}
                 </div>
                 <div style={{ flexShrink: 0, marginTop: '16px', display: 'flex', gap: '16px' }}>
-                  <button onClick={() => setStep('scenario_input')} style={{ padding: '16px 24px', backgroundColor: '#e2e8f0', color: '#475569', borderRadius: '12px', fontSize: '16px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', border: 'none' }}><i className="fas fa-chevron-left"></i> 戻る</button>
-                  <button onClick={goToPreview} style={{ flex: 1, padding: '16px', backgroundColor: '#10b981', color: 'white', borderRadius: '12px', fontSize: '18px', fontWeight: 'bold', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', cursor: 'pointer', border: 'none' }}>キャンバスエディタへ <i className="fas fa-chevron-right"></i></button>
+                  <button onClick={() => setStep('scenario_input')} style={{ padding: '16px 24px', backgroundColor: '#e2e8f0', color: '#475569', borderRadius: '12px', fontSize: '16px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '8px', border: 'none', cursor: 'pointer' }}><i className="fas fa-chevron-left"></i> 戻る</button>
+                  <button onClick={goToPreview} style={{ flex: 1, padding: '16px', backgroundColor: '#10b981', color: 'white', borderRadius: '12px', fontSize: '18px', fontWeight: 'bold', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', border: 'none', cursor: 'pointer' }}>キャンバスエディタへ <i className="fas fa-chevron-right"></i></button>
                 </div>
               </div>
             )}
@@ -632,8 +670,8 @@ Speech: "${formatTextForPrompt(mangaData.panels[3].dialogue, textStyle)}"`;
                      
                      {selectedId && (
                         <div style={{ display: 'flex', gap: '4px', padding: '4px', backgroundColor: '#f1f5f9', borderRadius: '8px', border: '1px solid #cbd5e1' }}>
-                          <button onClick={() => updateElement(selectedId, { fontSize: (elements.find(e=>e.id===selectedId)?.fontSize || 16) + 2 })} style={{ padding: '4px 8px', color: '#475569', border: 'none', background: 'none', cursor: 'pointer' }}><i className="fas fa-plus"></i></button>
-                          <button onClick={() => updateElement(selectedId, { fontSize: Math.max(10, (elements.find(e=>e.id===selectedId)?.fontSize || 16) - 2) })} style={{ padding: '4px 8px', color: '#475569', border: 'none', background: 'none', cursor: 'pointer' }}><i className="fas fa-minus"></i></button>
+                          <button onClick={handleZoomInElement} style={{ padding: '4px 8px', color: '#475569', border: 'none', background: 'none', cursor: 'pointer' }}><i className="fas fa-plus"></i></button>
+                          <button onClick={handleZoomOutElement} style={{ padding: '4px 8px', color: '#475569', border: 'none', background: 'none', cursor: 'pointer' }}><i className="fas fa-minus"></i></button>
                           <button onClick={() => deleteElement(selectedId)} style={{ padding: '4px 8px', color: '#ef4444', border: 'none', background: 'none', cursor: 'pointer' }}><i className="fas fa-trash"></i></button>
                         </div>
                      )}
@@ -725,8 +763,8 @@ Speech: "${formatTextForPrompt(mangaData.panels[3].dialogue, textStyle)}"`;
                 <h3 style={{ fontSize: '24px', fontWeight: '900', marginBottom: '16px', color: '#1e293b' }}>AI画像生成用プロンプト</h3>
                 <textarea readOnly value={generatePromptText()} style={{ width: '100%', height: '300px', padding: '16px', border: '2px solid #cbd5e1', borderRadius: '8px', fontSize: '14px', fontFamily: 'monospace', outline: 'none', backgroundColor: '#f8fafc', marginBottom: '16px' }} />
                 <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '16px' }}>
-                  <button onClick={() => setShowPromptModal(false)} style={{ padding: '12px 24px', backgroundColor: '#e2e8f0', color: '#475569', borderRadius: '8px', fontWeight: 'bold', fontSize: '16px', cursor: 'pointer', border: 'none' }}>閉じる</button>
-                  <button onClick={() => copyToClipboard(generatePromptText())} style={{ padding: '12px 32px', backgroundColor: '#2563eb', color: 'white', borderRadius: '8px', fontWeight: 'bold', fontSize: '16px', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', border: 'none' }}><i className="fas fa-copy"></i>コピーする</button>
+                  <button onClick={() => setShowPromptModal(false)} style={{ padding: '12px 24px', backgroundColor: '#e2e8f0', color: '#475569', borderRadius: '8px', fontWeight: 'bold', fontSize: '16px', border: 'none', cursor: 'pointer' }}>閉じる</button>
+                  <button onClick={() => copyToClipboard(generatePromptText())} style={{ padding: '12px 32px', backgroundColor: '#2563eb', color: 'white', borderRadius: '8px', fontWeight: 'bold', fontSize: '16px', display: 'flex', alignItems: 'center', gap: '8px', border: 'none', cursor: 'pointer' }}><i className="fas fa-copy"></i>コピーする</button>
                 </div>
               </div>
             </div>
@@ -741,8 +779,8 @@ Speech: "${formatTextForPrompt(mangaData.panels[3].dialogue, textStyle)}"`;
                    <span style={{ color: '#94a3b8', fontWeight: 'bold', fontSize: '20px' }}>.json</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '16px' }}>
-                  <button onClick={() => setShowSaveModal(false)} style={{ padding: '12px 24px', backgroundColor: '#e2e8f0', color: '#475569', borderRadius: '8px', fontWeight: 'bold', fontSize: '16px', cursor: 'pointer', border: 'none' }}>キャンセル</button>
-                  <button onClick={executeSave} style={{ padding: '12px 32px', backgroundColor: '#2563eb', color: 'white', borderRadius: '8px', fontWeight: 'bold', fontSize: '16px', cursor: 'pointer', border: 'none' }}>保存を実行</button>
+                  <button onClick={() => setShowSaveModal(false)} style={{ padding: '12px 24px', backgroundColor: '#e2e8f0', color: '#475569', borderRadius: '8px', fontWeight: 'bold', fontSize: '16px', border: 'none', cursor: 'pointer' }}>キャンセル</button>
+                  <button onClick={executeSave} style={{ padding: '12px 32px', backgroundColor: '#2563eb', color: 'white', borderRadius: '8px', fontWeight: 'bold', fontSize: '16px', border: 'none', cursor: 'pointer' }}>保存を実行</button>
                 </div>
               </div>
             </div>
