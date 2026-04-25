@@ -332,7 +332,17 @@
 1コマ目：問題となる場面の発生
 2コマ目：その結果どうなるか、周りの反応など
 3コマ目：解決策（ポイント）に気づく、または実践する
-4コマ目：うまくできた結果（笑顔など）`;
+4コマ目：うまくできた結果（笑顔など）
+
+必ず以下の形式のJSONデータのみを出力してください。Markdown記法などは一切含めないでください。
+{
+  "panels": [
+    { "scene": "...", "dialogue": "..." },
+    { "scene": "...", "dialogue": "..." },
+    { "scene": "...", "dialogue": "..." },
+    { "scene": "...", "dialogue": "..." }
+  ]
+}`;
 
         try {
           let retries = 0; const maxRetries = 5; let response;
@@ -341,7 +351,7 @@
               method: 'POST', headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
                 contents: [{ parts: [{ text: promptText }] }],
-                generationConfig: { responseMimeType: "application/json", responseSchema: { type: "OBJECT", properties: { panels: { type: "ARRAY", items: { type: "OBJECT", properties: { scene: { type: "STRING" }, dialogue: { type: "STRING" } } } } } } }
+                generationConfig: { responseMimeType: "application/json" }
               })
             });
             if (response.ok) break;
@@ -349,8 +359,9 @@
           }
           if (!response.ok) throw new Error('API Error');
           const result = await response.json();
-          const text = result.candidates?.[0]?.content?.parts?.[0]?.text;
+          let text = result.candidates?.[0]?.content?.parts?.[0]?.text;
           if (!text) throw new Error('No Text');
+          text = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
           const generatedData = JSON.parse(text);
           if (generatedData && generatedData.panels && generatedData.panels.length === 4) setMangaData(generatedData);
           else throw new Error('Invalid format');
@@ -372,12 +383,12 @@
         const apiKey = "";
         const promptText = generatePromptText();
         try {
-          const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent?key=${apiKey}`, {
+          const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/imagen-4.0-generate-001:predict?key=${apiKey}`, {
             method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ contents: [{ parts: [{ text: promptText }] }], generationConfig: { responseModalities: ["IMAGE"] } })
+            body: JSON.stringify({ instances: { prompt: promptText }, parameters: { sampleCount: 1 } })
           });
           const result = await response.json();
-          const base64Data = result.candidates?.[0]?.content?.parts?.find(p => p.inlineData)?.inlineData?.data;
+          const base64Data = result.predictions?.[0]?.bytesBase64Encoded;
           if (!base64Data) throw new Error('No Image');
           setElements(prev => prev.map(el => el.type === 'manga_placeholder' ? { ...el, src: `data:image/png;base64,${base64Data}` } : el));
         } catch(err) { setErrorMessage(`画像生成に失敗しました。`); } finally { setIsGeneratingImage(false); }
@@ -428,12 +439,12 @@
                 <div style={{ width: '100%', height: '100%', position: 'relative', backgroundColor: '#f8fafc', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: `${16 * innerScale}px`, overflow: 'hidden', boxSizing: 'border-box', border: `${Math.max(1, 4 * innerScale)}px solid #1e293b` }}>
                   {el.src ? <img src={el.src} style={{ width: '100%', height: '100%', objectFit: 'contain' }} alt="" /> : <div style={{ textAlign: 'center', color: '#cbd5e1' }} className="no-print"><i className="fas fa-image" style={{ fontSize: `${80 * innerScale}px`, opacity: 0.5 }}></i></div>}
                   {isPreviewMode && <button onClick={handleGenerateComic} disabled={isGeneratingImage} className="no-print" style={{ position: 'absolute', bottom: '20px', right: '20px', backgroundColor: '#2563eb', color: 'white', padding: '10px 20px', borderRadius: '40px', fontWeight: 'bold', boxShadow: '0 10px 20px rgba(0,0,0,0.2)', display: 'flex', alignItems: 'center', gap: '10px', fontSize: '18px' }}>
-                    <i className={`fas fa-sync ${isGeneratingImage ? 'fa-spin' : ''}`}></i> Gemini 2.5 Flashで画像生成
+                    <i className={`fas fa-sync ${isGeneratingImage ? 'fa-spin' : ''}`}></i> Imagen 4.0で画像生成
                   </button>}
                 </div>
               )}
 
-              {isPreviewMode && selectedId === el.id && <div className="no-print" style={{ position: 'absolute', right: '-15px', bottom: '-15px', width: '30px', height: '30px', backgroundColor: 'white', border: '3px solid #3b82f6', borderRadius: '50%', cursor: 'se-resize', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#3b82f6', boxShadow: '0 5px 10px rgba(0,0,0,0.2)' }} onPointerDown={(e) => handlePointerDown(e, el.id, 'resize')}><i className="fas fa-expand-alt" style={{ fontSize: '12px' }}></i></div>}
+              {/* リサイズハンドル */}
             </div>
           );
         });
