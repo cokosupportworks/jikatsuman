@@ -415,6 +415,11 @@
       const handlePointerDown = (e, id, action) => {
         if (step !== 'preview') return;
         
+        // 別の要素をタップしたときに編集状態を確実に解除
+        if (isEditingTextId && isEditingTextId !== id) {
+          setIsEditingTextId(null);
+        }
+
         // テキスト編集中はドラッグを開始しない
         if (isEditingTextId === id && action === 'move') return;
 
@@ -1078,7 +1083,7 @@ Speech: "${formatTextForPrompt(mangaData?.panels?.[3]?.dialogue, textStyle)}"`;
                         userSelect: 'text', WebkitUserSelect: 'text', touchAction: 'auto', pointerEvents: 'auto' // iOS入力用の強制スタイル
                       }} 
                     /> :
-                    <div style={{ width: '100%', wordBreak: 'keep-all', whiteSpace: 'pre-wrap', display: 'block', textAlign: el.align, fontSize: `${fontSize}px`, fontWeight: el.fontWeight, lineHeight: 1.8 }}>
+                    <div style={{ width: '100%', wordBreak: 'break-word', overflowWrap: 'anywhere', whiteSpace: 'pre-wrap', display: 'block', textAlign: el.align, fontSize: `${fontSize}px`, fontWeight: el.fontWeight, lineHeight: 1.8 }}>
                       {renderText(el.text)}
                     </div>
                   }
@@ -1317,7 +1322,7 @@ Speech: "${formatTextForPrompt(mangaData?.panels?.[3]?.dialogue, textStyle)}"`;
                         transformOrigin: 'top left', transform: `scale(${zoom})`,
                         touchAction: 'none' // キャンバス全体での不意のスクロールを完全に防止
                       }}
-                      onPointerDown={() => setSelectedId(null)}
+                      onPointerDown={() => { setSelectedId(null); setIsEditingTextId(null); }}
                     >
                       {bindingMargin && (
                         <div style={{ position: 'absolute', top: 0, left: 0, width: '95px', height: '100%', backgroundColor: 'rgba(203, 213, 225, 0.5)', borderRight: '2px dashed #94a3b8', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 0, pointerEvents: 'none' }}>
