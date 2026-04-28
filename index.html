@@ -233,6 +233,14 @@
       const textAreaRef = useRef(null);
       const lastTapInfo = useRef({ id: null, time: 0 });
 
+      // --- トリミング用状態 ---
+      const [showCropModal, setShowCropModal] = useState(false);
+      const [cropTargetId, setCropTargetId] = useState(null);
+      const [cropImageSrc, setCropImageSrc] = useState('');
+      const [cropBox, setCropBox] = useState({ top: 10, left: 10, width: 80, height: 80 });
+      const [cropDragInfo, setCropDragInfo] = useState(null);
+      const cropContainerRef = useRef(null);
+
       // 3. すべての useEffect を宣言
       useEffect(() => {
         const fetchExternalData = async () => {
@@ -308,7 +316,7 @@
       useEffect(() => {
         document.body.style.backgroundColor = step === 'preview' ? '#e2e8f0' : '#0f172a';
         if (step === 'preview') {
-          const cleanTitle = worksheetTitle ? worksheetTitle.replace(/[\(（][^\)）]+[\)）]/g, '').replace(/\s+/g, '') : '名称未設定';
+          const cleanTitle = worksheetTitle ? worksheetTitle.replace(new RegExp("[\\(（][^\\)）]+[\\)）]", "g"), '').replace(new RegExp("\\s+", "g"), '') : '名称未設定';
           document.title = `自プリ-${cleanTitle}`;
         } else {
           document.title = '自立活動プリントメーカー';
@@ -341,7 +349,7 @@
 
       const formatTextForPrompt = (text, style) => {
         if (!text) return "";
-        const regex = /([一-龠々]+)[(（]([\u3040-\u309F\u30A0-\u30FFー]+)[)）]/g;
+        const regex = new RegExp("([一-龠々]+)[(（]([\\u3040-\\u309F\\u30A0-\\u30FFー]+)[)）]", "g");
         if (style === 'hiragana') return text.replace(regex, '$2');
         if (style === 'kanji') return text.replace(regex, '$1');
         return text;
@@ -349,7 +357,7 @@
 
       const renderText = (text) => {
         if (!text) return "";
-        const regex = /([一-龠々]+)[(（]([\u3040-\u309F\u30A0-\u30FFー]+)[)）]/g;
+        const regex = new RegExp("([一-龠々]+)[(（]([\\u3040-\\u309F\\u30A0-\\u30FFー]+)[)）]", "g");
         let processedText = text;
         if (textStyle === 'hiragana') processedText = text.replace(regex, '$2');
         else if (textStyle === 'kanji') processedText = text.replace(regex, '$1');
@@ -501,6 +509,152 @@
         e.target.value = null;
       };
 
+      // --- トリミング機能 ---
+      const startCrop = (id) => {
+        const el = elements.find(e => e.id === id);
+        if (el && el.type === 'image') {
+          setCropTargetId(id);
+          setCropImageSrc(el.src);
+          setCropBox({ top: 10, left: 10, width: 80, height: 80 });
+          setShowCropModal(true);
+        }
+      };
+
+      const handleCropPointerDown = (e, action) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (!cropContainerRef.current) return;
+        const rect = cropContainerRef.current.getBoundingClientRect();
+        setCropDragInfo({
+          action,
+          startX: e.clientX,
+          startY: e.clientY,
+          origTop: cropBox.top,
+          origLeft: cropBox.left,
+          origWidth: cropBox.width,
+          origHeight: cropBox.height,
+          containerW: rect.width,
+          containerH: rect.height
+        });
+      };
+
+      useEffect(() => {
+        const handlePointerMove = (e) => {
+          if (!cropDragInfo) return;
+          const dx = ((e.clientX - cropDragInfo.startX) / cropDragInfo.containerW) * 100;
+          const dy = ((e.clientY - cropDragInfo.startY) / cropDragInfo.containerH) * 100;
+          
+          let { origTop, origLeft, origWidth, origHeight, action } = cropDragInfo;
+          let newTop = origTop, newLeft = origLeft, newWidth = origWidth, newHeight = origHeight;
+
+          if (action.includes('n')) { newTop = Math.min(origTop + origHeight - 5, Math.max(0, origTop + dy)); newHeight = origHeight + (origTop - newTop); }
+          if (action.includes('s')) { newHeight = Math.max(5, Math.min(100 - origTop, origHeight + dy)); }
+          if (action.includes('w')) { newLeft = Math.min(origLeft + origWidth - 5, Math.max(0, origLeft + dx)); newWidth = origWidth + (origLeft - newLeft); }
+          if (action.includes('e')) { newWidth = Math.max(5, Math.min(100 - origLeft, origWidth + dx)); }
+          if (action === 'move') {
+            newTop = Math.max(0, Math.min(100 - origHeight, origTop + dy));
+            newLeft = Math.max(0, Math.min(100 - origWidth, origLeft + dx));
+          }
+
+          setCropBox({ top: newTop, left: newLeft, width: newWidth, height: newHeight });
+        };
+        const handlePointerUp = () => setCropDragInfo(null);
+        
+        if (cropDragInfo) {
+          window.addEventListener('pointermove', handlePointerMove);
+          window.addEventListener('pointerup', handlePointerUp);
+        }
+        return () => {
+          window.removeEventListener('pointermove', handlePointerMove);
+          window.removeEventListener('pointerup', handlePointerUp);
+        };
+      }, [cropDragInfo]);
+
+      const executeCrop = () => {
+        if (!cropContainerRef.current) return;
+        const containerRect = cropContainerRef.current.getBoundingClientRect();
+        const containerWidth = containerRect.width;
+        const containerHeight = containerRect.height;
+
+        const img = new Image();
+        img.onload = () => {
+          const naturalW = img.naturalWidth;
+          const naturalH = img.naturalHeight;
+          const containerAspect = containerWidth / containerHeight;
+          const imageAspect = naturalW / naturalH;
+
+          let renderedW, renderedH, offsetX = 0, offsetY = 0;
+
+          // object-fit: contain によって実際に描画されている画像のサイズと余白（オフセット）を計算
+          if (imageAspect > containerAspect) {
+            // 画像が横長の場合、上下に余白ができる
+            renderedW = containerWidth;
+            renderedH = containerWidth / imageAspect;
+            offsetY = (containerHeight - renderedH) / 2;
+          } else {
+            // 画像が縦長の場合、左右に余白ができる
+            renderedW = containerHeight * imageAspect;
+            renderedH = containerHeight;
+            offsetX = (containerWidth - renderedW) / 2;
+          }
+
+          // 画面上の cropBox の % を ピクセル(px) に変換
+          const boxPxLeft = (cropBox.left / 100) * containerWidth;
+          const boxPxTop = (cropBox.top / 100) * containerHeight;
+          const boxPxWidth = (cropBox.width / 100) * containerWidth;
+          const boxPxHeight = (cropBox.height / 100) * containerHeight;
+
+          // 余白（オフセット）を差し引いて、実際の画像領域に対する座標に変換
+          const imgPxLeft = boxPxLeft - offsetX;
+          const imgPxTop = boxPxTop - offsetY;
+
+          // 実際の画像内での比率を算出
+          const ratioLeft = imgPxLeft / renderedW;
+          const ratioTop = imgPxTop / renderedH;
+          const ratioWidth = boxPxWidth / renderedW;
+          const ratioHeight = boxPxHeight / renderedH;
+
+          // 元の巨大な画像データに対する、最終的な切り抜き座標を決定
+          let sx = ratioLeft * naturalW;
+          let sy = ratioTop * naturalH;
+          let sWidth = ratioWidth * naturalW;
+          let sHeight = ratioHeight * naturalH;
+
+          // 枠が余白部分（画像外）にはみ出していた場合の補正（クランプ処理）
+          if (sx < 0) { sWidth += sx; sx = 0; }
+          if (sy < 0) { sHeight += sy; sy = 0; }
+          if (sx + sWidth > naturalW) sWidth = naturalW - sx;
+          if (sy + sHeight > naturalH) sHeight = naturalH - sy;
+
+          // 安全装置：万が一計算結果が0以下になったら処理を中断
+          if (sWidth <= 0 || sHeight <= 0) {
+            setShowCropModal(false);
+            setCropTargetId(null);
+            return;
+          }
+
+          const canvas = document.createElement('canvas');
+          canvas.width = sWidth;
+          canvas.height = sHeight;
+          const ctx = canvas.getContext('2d');
+          ctx.fillStyle = '#FFFFFF';
+          ctx.fillRect(0, 0, sWidth, sHeight);
+          ctx.drawImage(img, sx, sy, sWidth, sHeight, 0, 0, sWidth, sHeight);
+          
+          const newSrc = canvas.toDataURL('image/jpeg', 0.85);
+          
+          const targetEl = elements.find(e => e.id === cropTargetId);
+          if(targetEl) {
+             let newW = targetEl.width;
+             let newH = targetEl.width * (sHeight / sWidth);
+             updateElement(cropTargetId, { src: newSrc, width: newW, height: newH });
+          }
+          setShowCropModal(false);
+          setCropTargetId(null);
+        };
+        img.src = cropImageSrc;
+      };
+
       const handleSaveMyScenario = () => {
         if (!worksheetTitle) {
           setErrorMessage("タイトルを入力してください。");
@@ -580,7 +734,7 @@
         a.href = url;
         
         // ファイル名の生成
-        const cleanTitle = exportTargetScenario.title.replace(/[\(（][^\)）]+[\)）]/g, '').replace(/\s+/g, '_');
+        const cleanTitle = exportTargetScenario.title.replace(new RegExp("[\\(（][^\\)）]+[\\)）]", "g"), '').replace(new RegExp("\\s+", "g"), '_');
         const safeAuthorName = authorName.trim() || '〇〇';
         a.download = `自活プリ-${safeAuthorName}のシナリオ-${cleanTitle}.json`;
         
@@ -650,7 +804,7 @@
       };
 
       const handleOpenSaveModal = () => {
-        const cleanTitle = worksheetTitle.replace(/[\(（][^\)）]+[\)）]/g, '').replace(/\s+/g, '');
+        const cleanTitle = worksheetTitle.replace(new RegExp("[\\(（][^\\)）]+[\\)）]", "g"), '').replace(new RegExp("\\s+", "g"), '');
         setSaveFileName(`プリントデータ-${cleanTitle}`);
         setShowSaveModal(true);
       };
@@ -781,7 +935,7 @@ ${panelInstructions}
           const result = await response.json();
           let text = result.candidates?.[0]?.content?.parts?.[0]?.text;
           if (!text) throw new Error('No Text');
-          text = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+          text = text.replace(new RegExp('\`{3}json\\\\n?', 'g'), '').replace(new RegExp('\`{3}\\\\n?', 'g'), '').trim();
           const generatedData = JSON.parse(text);
           if (generatedData && generatedData.panels && generatedData.panels.length === 4) setMangaData(generatedData);
           else throw new Error('Invalid format');
@@ -972,7 +1126,7 @@ Speech: "${formatTextForPrompt(mangaData?.panels?.[3]?.dialogue, textStyle)}"`;
           <div className="no-print" style={{ height: '60px', backgroundColor: '#1e293b', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 24px', flexShrink: 0, boxShadow: '0 4px 6px rgba(0,0,0,0.1)', zIndex: 50 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
               <i className="fas fa-border-all" style={{ color: '#60a5fa', fontSize: '24px' }}></i>
-              <h1 style={{ fontSize: '20px', fontWeight: 'bold', letterSpacing: '-0.05em' }}>自立活動プリントメーカー</h1>
+              <h1 style={{ fontSize: '20px', fontWeight: 'bold', letterSpacing: '-0.05em', margin: 0 }}>自立活動プリントメーカー</h1>
               {step !== 'environment_check' && (
                 <button onClick={() => setStep('environment_check')} style={{ marginLeft: '16px', fontSize: '12px', color: '#cbd5e1', textDecoration: 'underline', background: 'none', border: 'none', cursor: 'pointer' }}>タイトルに戻る</button>
               )}
@@ -991,14 +1145,14 @@ Speech: "${formatTextForPrompt(mangaData?.panels?.[3]?.dialogue, textStyle)}"`;
                 </div>
 
                 <div style={{ display: 'flex', gap: '30px', flexWrap: 'wrap', justifyContent: 'center', marginBottom: '40px' }}>
-                  <button onClick={handleNewCreate} style={{ padding: '5px', backgroundColor: 'white', border: '4px solid #bfdbfe', borderRadius: '24px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '16px', boxShadow: '0 10px 25px rgba(0,0,0,0.05)', cursor: 'pointer' }}>
+                  <button onClick={handleNewCreate} style={{ padding: '5px', backgroundColor: 'white', border: '4px solid #bfdbfe', borderRadius: '24px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '16px', boxShadow: '0 10px 25px rgba(0,0,0,0.05)', cursor: 'pointer', width: '200px', height: '150px' }}>
                     <i className="fas fa-image" style={{ fontSize: '51px', color: '#2563eb' }}></i><span style={{ fontSize: '16px', fontWeight: 'bold', color: '#1e293b' }}>新しく作成する</span>
                   </button>
-                  <label style={{ cursor: 'pointer', padding: '5px', backgroundColor: 'white', border: '4px solid #e2e8f0', borderRadius: '24px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '16px', boxShadow: '0 10px 25px rgba(0,0,0,0.05)', margin: 0 }}>
-                    <i className="fas fa-folder-open" style={{ fontSize: '51px', color: '#475569' }}></i><span style={{ fontSize: '16px', fontWeight: 'bold', color: '#1e293b' }}>プリントデータを開く</span>
-                    <input type="file" accept=".json" onChange={handleLoad} className="hidden" />
+                  <label style={{ cursor: 'pointer', padding: '5px', backgroundColor: 'white', border: '4px solid #e2e8f0', borderRadius: '24px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '16px', boxShadow: '0 10px 25px rgba(0,0,0,0.05)', margin: 0, width: '200px', height: '150px' }}>
+                    <i className="fas fa-folder-open" style={{ fontSize: '51px', color: '#475569' }}></i><span style={{ fontSize: '16px', fontWeight: 'bold', color: '#1e293b' }}>データを開く</span>
+                    <input type="file" accept=".json" onChange={handleLoad} style={{ display: 'none' }} />
                   </label>
-                  <button onClick={() => { setTempApiKey(apiKey); setShowApiModal(true); }} style={{ padding: '5px', backgroundColor: 'white', border: '4px solid #cbd5e1', borderRadius: '24px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '16px', boxShadow: '0 10px 25px rgba(0,0,0,0.05)', cursor: 'pointer' }}>
+                  <button onClick={() => { setTempApiKey(apiKey); setShowApiModal(true); }} style={{ padding: '5px', backgroundColor: 'white', border: '4px solid #cbd5e1', borderRadius: '24px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '16px', boxShadow: '0 10px 25px rgba(0,0,0,0.05)', cursor: 'pointer', width: '200px', height: '150px' }}>
                     <i className="fas fa-cog" style={{ fontSize: '51px', color: '#64748b' }}></i><span style={{ fontSize: '16px', fontWeight: 'bold', color: '#1e293b' }}>API設定</span>
                   </button>
                 </div>
@@ -1043,7 +1197,7 @@ Speech: "${formatTextForPrompt(mangaData?.panels?.[3]?.dialogue, textStyle)}"`;
                     {targetDomain === '⭐ マイシナリオ（自作）' && (
                       <label style={{ fontSize: '12px', backgroundColor: '#10b981', color: 'white', padding: '6px 12px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '4px', margin: 0, boxShadow: '0 2px 4px rgba(0,0,0,0.1)', transition: 'background-color 0.2s' }}>
                         <i className="fas fa-file-import"></i> ファイルから追加
-                        <input type="file" accept=".json" onChange={handleImportScenario} className="hidden" />
+                        <input type="file" accept=".json" onChange={handleImportScenario} style={{ display: 'none' }} />
                       </label>
                     )}
                   </div>
@@ -1124,13 +1278,13 @@ Speech: "${formatTextForPrompt(mangaData?.panels?.[3]?.dialogue, textStyle)}"`;
                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                      <button onClick={addNewText} style={{ padding: '6px 12px', fontSize: '14px', backgroundColor: '#3b82f6', color: 'white', borderRadius: '8px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '4px', border: 'none', cursor: 'pointer' }}><i className="fas fa-font"></i> テキスト</button>
                      <label style={{ padding: '6px 12px', fontSize: '14px', backgroundColor: '#3b82f6', color: 'white', borderRadius: '8px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer', margin: 0 }}>
-                       <i className="fas fa-image"></i> 画像<input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
+                       <i className="fas fa-image"></i> 画像<input type="file" accept="image/*" onChange={handleImageUpload} style={{ display: 'none' }} />
                      </label>
                    </div>
                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                      <button onClick={handleOpenSaveModal} style={{ padding: '6px 12px', fontSize: '14px', backgroundColor: '#10b981', color: 'white', borderRadius: '8px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '4px', border: 'none', cursor: 'pointer' }}><i className="fas fa-save"></i> データ保存</button>
                      <label style={{ padding: '6px 12px', fontSize: '14px', backgroundColor: '#10b981', color: 'white', borderRadius: '8px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer', margin: 0 }}>
-                       <i className="fas fa-folder-open"></i> データ読込<input type="file" accept=".json" onChange={handleLoad} className="hidden" />
+                       <i className="fas fa-folder-open"></i> データ読込<input type="file" accept=".json" onChange={handleLoad} style={{ display: 'none' }} />
                      </label>
                      <button onClick={() => setBindingMargin(!bindingMargin)} style={{ padding: '6px 12px', fontSize: '14px', backgroundColor: bindingMargin ? '#f59e0b' : '#64748b', color: 'white', borderRadius: '8px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '4px', border: bindingMargin ? '2px solid #fcd34d' : 'none', cursor: 'pointer' }}><i className="fas fa-box"></i> とじ代</button>
                      
@@ -1138,6 +1292,9 @@ Speech: "${formatTextForPrompt(mangaData?.panels?.[3]?.dialogue, textStyle)}"`;
                         <div style={{ display: 'flex', gap: '4px', padding: '4px', backgroundColor: '#f1f5f9', borderRadius: '8px', border: '1px solid #cbd5e1' }}>
                           {elements.find(e=>e.id===selectedId)?.type === 'text' && (
                             <button onClick={() => startEditing(selectedId)} style={{ padding: '4px 8px', color: '#2563eb', border: 'none', background: 'none', cursor: 'pointer', fontWeight: 'bold' }}><i className="fas fa-edit"></i> 編集</button>
+                          )}
+                          {elements.find(e=>e.id===selectedId)?.type === 'image' && (
+                            <button onClick={() => startCrop(selectedId)} style={{ padding: '4px 8px', color: '#475569', border: 'none', background: 'none', cursor: 'pointer' }} title="トリミング"><i className="fas fa-crop"></i></button>
                           )}
                           <button onClick={handleZoomInElement} style={{ padding: '4px 8px', color: '#475569', border: 'none', background: 'none', cursor: 'pointer' }}><i className="fas fa-plus"></i></button>
                           <button onClick={handleZoomOutElement} style={{ padding: '4px 8px', color: '#475569', border: 'none', background: 'none', cursor: 'pointer' }}><i className="fas fa-minus"></i></button>
@@ -1271,8 +1428,8 @@ Speech: "${formatTextForPrompt(mangaData?.panels?.[3]?.dialogue, textStyle)}"`;
                       <li><strong>AI Studioへアクセス:</strong> <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" style={{ color: '#2563eb', textDecoration: 'underline', fontWeight: 'bold' }}>Google AI Studio</a> を開きます。</li>
                       <li><strong>サインイン / 利用規約の同意:</strong> 画面の指示に従ってGoogleアカウントでサインインし、利用規約に同意（チェックを入れてContinue）します。</li>
                       <li><strong>「Get API key」をクリック:</strong> 左側のメニュー、または画面上部にある「Get API key（APIキーを取得）」というボタンをクリックします。</li>
-                      <li><strong>「Create API key」をクリック:</strong> 「Create API key（APIキーを作成）」という青いボタンをクリックします。</li>
-                      <li><strong>プロジェクトの作成:</strong> 初めての場合は「New project（新しいプロジェクトで作成）」を選択して作成ボタンを押します。</li>
+                      <li><strong>「Create API key」をクリック:</strong> 「Create API key（APIキーを作成）」のボタンをクリックします。</li>
+                      <li><strong>プロジェクトの作成:</strong> 「キー名の設定」は「Gemini API key」から任意の文字列に書き換えても可能です。「インポートしたプロジェクトを選択」では、初めての場合は「プロジェクトを作成」から、新しいプロジェクトの名前で作成してください。「キーを作成」を押します。</li>
                       <li><strong>キーのコピー:</strong> <code>AIzaSy...</code> から始まる長い文字列が表示されます。「Copy」ボタンを押してコピーし、このアプリの入力欄に貼り付けてください。</li>
                     </ol>
                   </div>
@@ -1323,7 +1480,7 @@ Speech: "${formatTextForPrompt(mangaData?.panels?.[3]?.dialogue, textStyle)}"`;
               <div style={{ backgroundColor: 'white', borderRadius: '16px', width: '90%', maxWidth: '500px', display: 'flex', flexDirection: 'column', boxShadow: '0 10px 25px rgba(0,0,0,0.5)', padding: '32px' }}>
                 <h3 style={{ fontSize: '24px', fontWeight: '900', marginBottom: '24px', color: '#1e293b' }}>プリントデータの保存（レイアウトを含む）</h3>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: '#f1f5f9', padding: '12px 16px', borderRadius: '8px', marginBottom: '32px', border: '2px solid #e2e8f0' }}>
-                   <input type="text" value={saveFileName} onChange={(e) => setSaveFileName(e.target.value)} style={{ flex: 1, backgroundColor: 'transparent', outline: 'none', fontWeight: 'bold', fontSize: '20px' }} autoFocus />
+                   <input type="text" value={saveFileName} onChange={(e) => setSaveFileName(e.target.value)} style={{ flex: 1, backgroundColor: 'transparent', outline: 'none', fontWeight: 'bold', fontSize: '20px', border: 'none' }} autoFocus />
                    <span style={{ color: '#94a3b8', fontWeight: 'bold', fontSize: '20px' }}>.json</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '16px' }}>
@@ -1379,7 +1536,7 @@ Speech: "${formatTextForPrompt(mangaData?.panels?.[3]?.dialogue, textStyle)}"`;
                 <div style={{ backgroundColor: '#f1f5f9', padding: '12px 16px', borderRadius: '8px', marginBottom: '32px', border: '2px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: '4px' }}>
                    <span style={{ fontSize: '12px', fontWeight: 'bold', color: '#64748b' }}>出力されるファイル名：</span>
                    <span style={{ fontWeight: 'bold', fontSize: '16px', color: '#1e293b', wordBreak: 'break-all' }}>
-                     自活プリ-{authorName.trim() || '〇〇'}のシナリオ-{exportTargetScenario.title.replace(/[\(（][^\)）]+[\)）]/g, '').replace(/\s+/g, '_')}.json
+                     自活プリ-{authorName.trim() || '〇〇'}のシナリオ-{exportTargetScenario.title.replace(new RegExp("[\\(（][^\\)）]+[\\)）]", "g"), '').replace(new RegExp("\\s+", "g"), '_')}.json
                    </span>
                 </div>
 
@@ -1413,6 +1570,69 @@ Speech: "${formatTextForPrompt(mangaData?.panels?.[3]?.dialogue, textStyle)}"`;
                   >
                     <span style={{ fontSize: '18px', fontWeight: 'bold', color: '#be185d' }}>🤔 発問シナリオを作成</span>
                     <span style={{ fontSize: '13px', color: '#ec4899' }}>あえて解決せずに終わり、生徒に考えさせます</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* 画像トリミング用モーダル (no-print) */}
+          {showCropModal && (
+            <div className="no-print" style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', backgroundColor: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3000 }}>
+              <div style={{ backgroundColor: '#0f172a', borderRadius: '16px', width: '90%', maxWidth: '800px', height: '80vh', display: 'flex', flexDirection: 'column', boxShadow: '0 10px 25px rgba(0,0,0,0.5)', border: '1px solid #334155' }}>
+                <div style={{ padding: '16px', backgroundColor: '#1e293b', color: 'white', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #334155' }}>
+                  <h3 style={{ fontSize: '18px', fontWeight: 'bold', margin: 0 }}><i className="fas fa-crop"></i> 画像のトリミング</h3>
+                  <button onClick={() => setShowCropModal(false)} style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer', fontSize: '20px' }}><i className="fas fa-times"></i></button>
+                </div>
+                
+                <div style={{ flex: 1, position: 'relative', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '32px', backgroundColor: '#020617' }}>
+                   {/* 修正：コンテナをflexにし、maxHeightを100%にすることで画像にピッタリ追従させる */}
+                   <div 
+                     ref={cropContainerRef} 
+                     style={{ position: 'relative', display: 'flex', maxWidth: '100%', maxHeight: '100%', border: '1px solid #334155' }}
+                   >
+                     {/* 修正：画像の高さをコンテナの100%（=限界まで）とし、計算式によるはみ出しを防ぐ */}
+                     <img src={cropImageSrc} alt="crop-target" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', display: 'block', pointerEvents: 'none' }} />
+                     
+                     <svg style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 10 }}>
+                       <mask id="cropMask">
+                         <rect width="100%" height="100%" fill="white" />
+                         <rect x={`${cropBox.left}%`} y={`${cropBox.top}%`} width={`${cropBox.width}%`} height={`${cropBox.height}%`} fill="black" />
+                       </mask>
+                       <rect width="100%" height="100%" fill="rgba(0,0,0,0.6)" mask="url(#cropMask)" />
+                     </svg>
+
+                     <div 
+                       style={{
+                         position: 'absolute', top: `${cropBox.top}%`, left: `${cropBox.left}%`,
+                         width: `${cropBox.width}%`, height: `${cropBox.height}%`,
+                         border: '2px solid white', zIndex: 20, cursor: 'move',
+                         boxShadow: '0 0 0 1px rgba(0,0,0,0.5), inset 0 0 0 1px rgba(0,0,0,0.5)',
+                         boxSizing: 'border-box'
+                       }}
+                       onPointerDown={(e) => handleCropPointerDown(e, 'move')}
+                     >
+                       <div style={{ position: 'absolute', top: '33.3%', left: 0, right: 0, height: '1px', backgroundColor: 'rgba(255,255,255,0.5)', pointerEvents: 'none' }}></div>
+                       <div style={{ position: 'absolute', top: '66.6%', left: 0, right: 0, height: '1px', backgroundColor: 'rgba(255,255,255,0.5)', pointerEvents: 'none' }}></div>
+                       <div style={{ position: 'absolute', left: '33.3%', top: 0, bottom: 0, width: '1px', backgroundColor: 'rgba(255,255,255,0.5)', pointerEvents: 'none' }}></div>
+                       <div style={{ position: 'absolute', left: '66.6%', top: 0, bottom: 0, width: '1px', backgroundColor: 'rgba(255,255,255,0.5)', pointerEvents: 'none' }}></div>
+
+                       <div style={{ position: 'absolute', top: '-8px', left: '-8px', width: '16px', height: '16px', backgroundColor: '#3b82f6', border: '2px solid white', borderRadius: '50%', cursor: 'nwse-resize' }} onPointerDown={(e) => handleCropPointerDown(e, 'nw')} />
+                       <div style={{ position: 'absolute', top: '-8px', left: 'calc(50% - 8px)', width: '16px', height: '16px', backgroundColor: '#3b82f6', border: '2px solid white', borderRadius: '50%', cursor: 'ns-resize' }} onPointerDown={(e) => handleCropPointerDown(e, 'n')} />
+                       <div style={{ position: 'absolute', top: '-8px', right: '-8px', width: '16px', height: '16px', backgroundColor: '#3b82f6', border: '2px solid white', borderRadius: '50%', cursor: 'nesw-resize' }} onPointerDown={(e) => handleCropPointerDown(e, 'ne')} />
+                       <div style={{ position: 'absolute', top: 'calc(50% - 8px)', left: '-8px', width: '16px', height: '16px', backgroundColor: '#3b82f6', border: '2px solid white', borderRadius: '50%', cursor: 'ew-resize' }} onPointerDown={(e) => handleCropPointerDown(e, 'w')} />
+                       <div style={{ position: 'absolute', top: 'calc(50% - 8px)', right: '-8px', width: '16px', height: '16px', backgroundColor: '#3b82f6', border: '2px solid white', borderRadius: '50%', cursor: 'ew-resize' }} onPointerDown={(e) => handleCropPointerDown(e, 'e')} />
+                       <div style={{ position: 'absolute', bottom: '-8px', left: '-8px', width: '16px', height: '16px', backgroundColor: '#3b82f6', border: '2px solid white', borderRadius: '50%', cursor: 'nesw-resize' }} onPointerDown={(e) => handleCropPointerDown(e, 'sw')} />
+                       <div style={{ position: 'absolute', bottom: '-8px', left: 'calc(50% - 8px)', width: '16px', height: '16px', backgroundColor: '#3b82f6', border: '2px solid white', borderRadius: '50%', cursor: 'ns-resize' }} onPointerDown={(e) => handleCropPointerDown(e, 's')} />
+                       <div style={{ position: 'absolute', bottom: '-8px', right: '-8px', width: '16px', height: '16px', backgroundColor: '#3b82f6', border: '2px solid white', borderRadius: '50%', cursor: 'nwse-resize' }} onPointerDown={(e) => handleCropPointerDown(e, 'se')} />
+                     </div>
+                   </div>
+                </div>
+                
+                <div style={{ padding: '16px', backgroundColor: '#1e293b', borderTop: '1px solid #334155', display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
+                  <button onClick={() => setShowCropModal(false)} style={{ padding: '10px 24px', backgroundColor: '#334155', color: 'white', borderRadius: '8px', fontWeight: 'bold', border: 'none', cursor: 'pointer' }}>キャンセル</button>
+                  <button onClick={executeCrop} style={{ padding: '10px 32px', backgroundColor: '#2563eb', color: 'white', borderRadius: '8px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '8px', border: 'none', cursor: 'pointer' }}>
+                     <i className="fas fa-crop"></i> 切り抜く
                   </button>
                 </div>
               </div>
