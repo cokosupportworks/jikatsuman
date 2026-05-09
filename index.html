@@ -8,6 +8,10 @@
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
   <link rel="icon" href="apple-touch-icon.png">
 
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=BIZ+UDPGothic&family=Dela+Gothic+One&family=DotGothic16&family=Klee+One:wght@400;600&family=Noto+Sans+JP:wght@400;700&family=Noto+Serif+JP:wght@400;700&family=Yusei+Magic&display=swap" rel="stylesheet">
+
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
@@ -246,7 +250,7 @@
             hasHatsumon: true,
             panelsTehon: [
               { scene: '校庭での徒競走。他の友達がゴールし、自分が一番最後になって悔し涙を流している児童。', dialogue: '悔(くや)しいよー！' },
-              { scene: '児童が地面に両手をついて突っ伏し、悔しそうに泣き叫んでいる。', dialogue: '一番(いちばん)じゃ なきゃ 嫌(いや)だ！' },
+              { scene: '児童が地面に両手をついて突っ伏し、悔しそうに泣叫んでいる。', dialogue: '一番(いちばん)じゃ なきゃ 嫌(いや)だ！' },
               { scene: '児童が立ち上がり、胸に手を当てて大きく深呼吸をし、気持ちを落ち着かせている。', dialogue: '次(つぎ) 頑張(がんば)れば いいや。' },
               { scene: '1位になった友達に向かって、笑顔で拍手をしてお祝いをしている。', dialogue: 'おめでとう！' }
             ],
@@ -369,14 +373,14 @@
             panelsTehon: [
               { scene: '友達が画用紙に描いた絵を見て、「うまく描けない」と悲しそうな顔をしている。', dialogue: 'うまく 描(か)けないな。' },
               { scene: '児童が、友達の絵を指差して「下手くそ！」と大笑いしている。', dialogue: 'あはは！ 下手(へた)くそ！' },
-              { scene: '友達が泣きそうになっているのを見て、児童がハッとし、自分の口を両手で覆って反省している。', dialogue: 'ちくちく 言葉(ことば) だった。' },
-              { scene: '児童が友達に寄り添い、笑顔で優しく励ましている。', dialogue: '大丈夫(だいじょうぶ)だよ！' }
+              { scene: '相手が泣きそうになりハッとする', dialogue: 'ちくちく 言葉(ことば) だった。' },
+              { scene: '励ます', dialogue: '大丈夫(だいじょうぶ)だよ！' }
             ],
             panelsHatsumon: [
               { scene: '友達が画用紙に描いた絵を見て、「うまく描けない」と悲しそうな顔をしている。', dialogue: 'うまく 描(か)けないな。' },
               { scene: '児童が、友達の絵を指差して「下手くそ！」と大笑いしている。', dialogue: 'あはは！ 下手(へた)くそ！' },
-              { scene: '先生が児童の前に立ち、優しい「ふわふわ言葉」を使うように注意している。', dialogue: '優(やさ)しく 言(い)おうね。' },
-              { scene: '児童が先生の注意を聞かず、あっかんべーをして友達の絵をさらにからかっている。友達は泣いている。', dialogue: 'だって 下手(へた)だもん！' }
+              { scene: '先生がふわふわ言葉を使うよう注意する', dialogue: '優(やさ)しく 言(い)おうね。' },
+              { scene: 'わざとさらにからかう', dialogue: 'だって 下手(へた)だもん！' }
             ]
           },
           {
@@ -387,16 +391,16 @@
             hasTehon: true,
             hasHatsumon: true,
             panelsTehon: [
-              { scene: '児童がプリント学習中に、隣の席の友達の机の上にある消しゴムを見つける。', dialogue: '消(け)しゴムが あるぞ。' },
-              { scene: '児童が、無言で友達の机に手を伸ばし、消しゴムを勝手に取ろうとしている。', dialogue: 'ちょっと 使(つか)っちゃお。' },
-              { scene: '児童がハッとして空中で手を止め、友達の顔を見て許可をもらおうとしている。', dialogue: '使(つか)っても いい？' },
-              { scene: '児童が「使ってもいい？」と聞き、友達が笑顔で頷いて消しゴムを貸してくれている。', dialogue: 'いいよ。' }
+              { scene: '隣の席の消しゴムを見つける', dialogue: '消(け)しゴムが あるぞ。' },
+              { scene: '勝手にとって使う', dialogue: 'ちょっと 使(つか)っちゃお。' },
+              { scene: '手を止めて相手の顔を見る', dialogue: '使(つか)っても いい？' },
+              { scene: '許可をもらって使う', dialogue: 'いいよ。' }
             ],
             panelsHatsumon: [
-              { scene: '児童がプリント学習中に、隣の席の友達の机の上にある消しゴムを見つける。', dialogue: '消(け)しゴムが あるぞ。' },
-              { scene: '児童が、無言で友達の机に手を伸ばし、消しゴムを勝手に取ろうとしている。', dialogue: 'ちょっと 使(つか)っちゃお。' },
-              { scene: '友達が児童の手を止め、「使う前に聞いてね」と困った顔で伝えている。', dialogue: '聞(き)いてから 使(つか)って。' },
-              { scene: '児童が怒った顔で消しゴムを奪い取り、「いいじゃん！」と言って勝手に使っている。', dialogue: 'ケチ！' }
+              { scene: '隣の席の消しゴムを見つける', dialogue: '消(け)しゴムが あるぞ。' },
+              { scene: '勝手にとって使う', dialogue: 'ちょっと 使(つか)っちゃお。' },
+              { scene: '友達が使う前に聞くよう言う', dialogue: '聞(き)いてから 使(つか)って。' },
+              { scene: '「いいじゃん！」と言って返さない', dialogue: 'ケチ！' }
             ]
           }
         ],
@@ -559,6 +563,26 @@
             panelsHatsumon: [
               { scene: '書写の時間。児童が、親指から小指まで5本の指全部を使って鉛筆をグーの形で握りしめ、力を込めて字を書いている。', dialogue: 'うまく 書(か)けないな。' },
               { scene: '字がはみ出しており、児童が手が痛くなって鉛筆を机の上に放り投げ、右手をさすっている。', dialogue: '手(て)が 疲(つか)れた！' },
+              { scene: '先生が持ち方を教える', dialogue: '３本(ぼん)指(ゆび)で 持(も)とう。' },
+              { scene: 'グーのままで書き続ける', dialogue: 'こっちが いい！' }
+            ]
+          },
+          {
+            label: 'タッチが強すぎる',
+            scenario: '友達(ともだち)に タッチ する とき、叩(たた)いて しまう 場面(ばめん)です。',
+            goal: '「優(やさ)しく ポン」と 弱(よわ)い 力(ちから)で 触(さわ)る ことが 大切(たいせつ)です。',
+            title: '優(やさ)しい 力加減(ちからかげん)',
+            hasTehon: true,
+            hasHatsumon: true,
+            panelsTehon: [
+              { scene: '朝の挨拶。児童が登校してきた友達を見つけ、右手を大きく後ろに振りかぶって勢いをつけている。', dialogue: 'おはよう！！' },
+              { scene: '強く背中を叩く', dialogue: '（ばしっ！）痛(いた)いよ！' },
+              { scene: '手を止めて言い聞かせる', dialogue: '優(やさ)しく タッチ だった。' },
+              { scene: '肩を優しくポンと叩く', dialogue: '優(やさ)しく タッチだね。' }
+            ],
+            panelsHatsumon: [
+              { scene: '朝の挨拶。児童が登校してきた友達を見つけ、右手を大きく後ろに振りかぶって勢いをつけている。', dialogue: 'おはよう！！' },
+              { scene: '強く背中を叩く', dialogue: '（ばしっ！）痛(いた)いよ！' },
               { scene: '先生が児童の横に来て、児童の手に自分の手を重ねて、正しい3本指の持ち方を教えている。', dialogue: '３本(ぼん)指(ゆび)で 持(も)とう。' },
               { scene: '児童が先生の手を振りほどき、再びグーの形で鉛筆を握りしめ、力を込めて乱暴に書き続けている。', dialogue: 'こっちが いい！' }
             ]
@@ -737,6 +761,7 @@
       const [dragInfo, setDragInfo] = useState(null);
       const [zoom, setZoom] = useState(0.7);
       const [apiKey, setApiKey] = useState(() => localStorage.getItem('gemini_api_key') || '');
+      const [isGeneratingImage, setIsGeneratingImage] = useState(false);
       const [isGeneratingScenario, setIsGeneratingScenario] = useState(false);
       const [errorMessage, setErrorMessage] = useState(null);
       const [showApiModal, setShowApiModal] = useState(false);
@@ -762,6 +787,22 @@
       const [cropImageSrc, setCropImageSrc] = useState('');
       const [cropBox, setCropBox] = useState({ top: 10, left: 10, width: 80, height: 80 });
       const [cropDragInfo, setCropDragInfo] = useState(null);
+      
+      const [showGenerateConfirmModal, setShowGenerateConfirmModal] = useState(false);
+
+      const [drawMode, setDrawMode] = useState(false);
+      const [penColor, setPenColor] = useState('#ffffff');
+      const [penWidth, setPenWidth] = useState(15);
+      const [currentPath, setCurrentPath] = useState(null);
+      const [activeDrawingPaths, setActiveDrawingPaths] = useState([]);
+      const activeDrawingPathsRef = useRef([]);
+
+      const [subMenuPos, setSubMenuPos] = useState({ x: 20, y: 80 });
+      const [subMenuDrag, setSubMenuDrag] = useState(null);
+
+      const [showLayerPanel, setShowLayerPanel] = useState(false);
+      const [layerPanelPos, setLayerPanelPos] = useState({ x: 20, y: 160 });
+      const [layerPanelDrag, setLayerPanelDrag] = useState(null);
 
       const [mergedScenarios, setMergedScenarios] = useState(SCENARIO_DATA_INFO.scenarios);
       const [externalDataInfo, setExternalDataInfo] = useState(null);
@@ -821,6 +862,10 @@
       }, [step, worksheetTitle]);
 
       useEffect(() => {
+        activeDrawingPathsRef.current = activeDrawingPaths;
+      }, [activeDrawingPaths]);
+
+      useEffect(() => {
         const handlePointerMove = (e) => {
           if (!dragInfo) return;
           const innerScale = bindingMargin ? 0.88 : 1.0;
@@ -860,12 +905,52 @@
           setCropBox({ top, left, width, height });
         };
         const handleCropUp = () => setCropDragInfo(null);
+        
         if (cropDragInfo) {
           window.addEventListener('pointermove', handleCropMove);
           window.addEventListener('pointerup', handleCropUp);
         }
-        return () => { window.removeEventListener('pointermove', handleCropMove); window.removeEventListener('pointerup', handleCropUp); };
+        return () => {
+          window.removeEventListener('pointermove', handleCropMove);
+          window.removeEventListener('pointerup', handleCropUp);
+        };
       }, [cropDragInfo, cropBox]);
+
+      useEffect(() => {
+        const handleSubMenuMove = (e) => {
+          if (!subMenuDrag) return;
+          const dx = e.clientX - subMenuDrag.startX;
+          const dy = e.clientY - subMenuDrag.startY;
+          setSubMenuPos({ x: subMenuDrag.origX + dx, y: subMenuDrag.origY + dy });
+        };
+        const handleSubMenuUp = () => setSubMenuDrag(null);
+        if (subMenuDrag) {
+          window.addEventListener('pointermove', handleSubMenuMove);
+          window.addEventListener('pointerup', handleSubMenuUp);
+        }
+        return () => {
+          window.removeEventListener('pointermove', handleSubMenuMove);
+          window.removeEventListener('pointerup', handleSubMenuUp);
+        };
+      }, [subMenuDrag]);
+
+      useEffect(() => {
+        const handleLayerMove = (e) => {
+          if (!layerPanelDrag) return;
+          const dx = e.clientX - layerPanelDrag.startX;
+          const dy = e.clientY - layerPanelDrag.startY;
+          setLayerPanelPos({ x: layerPanelDrag.origX + dx, y: layerPanelDrag.origY + dy });
+        };
+        const handleLayerUp = () => setLayerPanelDrag(null);
+        if (layerPanelDrag) {
+          window.addEventListener('pointermove', handleLayerMove);
+          window.addEventListener('pointerup', handleLayerUp);
+        }
+        return () => {
+          window.removeEventListener('pointermove', handleLayerMove);
+          window.removeEventListener('pointerup', handleLayerUp);
+        };
+      }, [layerPanelDrag]);
 
       const displayScenarios = { ...mergedScenarios, '⭐ マイシナリオ（自作）': myScenarios };
 
@@ -875,6 +960,21 @@
         if (style === 'hiragana') return text.replace(regex, '$2');
         if (style === 'kanji') return text.replace(regex, '$1');
         return text;
+      };
+
+      const parseDialogue = (dialogueText, textStyle) => {
+        if (!dialogueText) return "";
+        const regex = /([^「\n]+?)「([^」]+?)」/g;
+        let matches = [...dialogueText.matchAll(regex)];
+        if (matches.length > 0) {
+          return matches.map(match => {
+            const speaker = formatTextForPrompt(match[1].trim(), 'kanji'); 
+            const speech = formatTextForPrompt(match[2].trim(), textStyle);
+            return `${speaker}'s Speech bubble: "${speech}"`;
+          }).join("\n");
+        } else {
+          return `Speech: "${formatTextForPrompt(dialogueText, textStyle)}"`;
+        }
       };
 
       const renderText = (text) => {
@@ -900,7 +1000,7 @@
         if (elements.length === 0) {
           const initialElements = [
             { id: 'badge', type: 'text', text: textStyle === 'hiragana' ? 'じりつかつどう' : '自立活動', x: 40, y: 40, width: 160, height: 50, fontSize: 18, fontWeight: 'bold', bg: '#fef08a', border: true, borderRadius: 8, align: 'center', padding: 8 },
-            { id: 'nameField', type: 'text', text: '日にち：　　　　　　月　　　　　日', x: 440, y: 40, width: 314, height: 50, fontSize: 18, borderBottom: true, align: 'left', padding: 8 },
+            { id: 'nameField', type: 'text', text: '日にち：　　　　月　　　　日', x: 440, y: 40, width: 314, height: 50, fontSize: 18, borderBottom: true, align: 'left', padding: 8 },
             { id: 'title', type: 'text', text: worksheetTitle, x: 40, y: 110, width: 714, height: 90, fontSize: 32, fontWeight: 'black', align: 'center', padding: 8 },
             { id: 'scenario', type: 'text', text: scenario + (scenarioMode === 'hatsumon' ? (textStyle === 'hiragana' ? ' どうすればよかったか かんがえてみましょう。' : ' どうすれば よかったか 考(かんが)えてみましょう。') : (textStyle === 'hiragana' ? ' おはなしを よんで かんがえましょう。' : ' お話(はなし)を 読(よ)んで 考(かんが)えましょう。')), x: 40, y: 210, width: 714, height: 80, fontSize: 16, align: 'center', padding: 8 },
             { id: 'mangaImage', type: 'manga_placeholder', src: null, x: 40, y: 300, width: 714, height: 600 },
@@ -951,9 +1051,78 @@
       const updateElement = (id, changes) => setElements(prev => prev.map(el => el.id === id ? { ...el, ...changes } : el));
       const deleteElement = (id) => { setElements(prev => prev.filter(el => el.id !== id)); setSelectedId(null); };
 
+      const moveLayer = (id, direction) => {
+        setElements(prev => {
+          const index = prev.findIndex(el => el.id === id);
+          if (index < 0) return prev;
+          const newElements = [...prev];
+          if (direction === 'up' && index < prev.length - 1) {
+            [newElements[index], newElements[index + 1]] = [newElements[index + 1], newElements[index]];
+          } else if (direction === 'down' && index > 0) {
+            [newElements[index], newElements[index - 1]] = [newElements[index - 1], newElements[index]];
+          }
+          return newElements;
+        });
+      };
+
+      const endDrawMode = () => {
+        const current = activeDrawingPathsRef.current;
+        if (current.length > 0) {
+          let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+          current.forEach(path => {
+            const hw = path.strokeWidth / 2;
+            path.points.forEach(p => {
+              if (p.x - hw < minX) minX = p.x - hw;
+              if (p.y - hw < minY) minY = p.y - hw;
+              if (p.x + hw > maxX) maxX = p.x + hw;
+              if (p.y + hw > maxY) maxY = p.y + hw;
+            });
+          });
+          minX = Math.max(0, minX - 5);
+          minY = Math.max(0, minY - 5);
+          maxX = Math.min(CANVAS_W, maxX + 5);
+          maxY = Math.min(CANVAS_H, maxY + 5);
+          
+          const width = Math.max(10, maxX - minX);
+          const height = Math.max(10, maxY - minY);
+
+          const localPaths = current.map(path => ({
+            ...path,
+            points: path.points.map(p => ({ x: p.x - minX, y: p.y - minY }))
+          }));
+
+          const newEl = {
+            id: `drawing_${Date.now()}`,
+            type: 'drawing',
+            x: minX,
+            y: minY,
+            width,
+            height,
+            origWidth: width,
+            origHeight: height,
+            paths: localPaths
+          };
+          setElements(prev => [...prev, newEl]);
+        }
+        setActiveDrawingPaths([]);
+        setDrawMode(false);
+      };
+
+      const handlePenToggle = () => {
+        if (drawMode) {
+          endDrawMode();
+        } else {
+          setDrawMode(true);
+          setSelectedId(null);
+          setIsEditingTextId(null);
+          setShowLayerPanel(false);
+        }
+      };
+
       const addNewText = () => { 
+        if (drawMode) endDrawMode();
         const newId = `text_${Date.now()}`;
-        const newEl = { id: newId, type: 'text', text: '新しいテキスト', x: 100, y: 100, width: 200, height: 60, fontSize: 18, align: 'left', padding: 8 }; 
+        const newEl = { id: newId, type: 'text', text: '新しいテキスト', x: 100, y: 100, width: 200, height: 60, fontSize: 18, align: 'left', padding: 8, color: '#000000', fontFamily: 'sans-serif' }; 
         if (typeof flushSync === 'function') {
           flushSync(() => { setElements([...elements, newEl]); setSelectedId(newId); setIsEditingTextId(newId); });
           if (textAreaRef.current) textAreaRef.current.focus();
@@ -964,6 +1133,7 @@
       };
 
       const handleImageUpload = (e) => {
+        if (drawMode) endDrawMode();
         const file = e.target.files[0];
         if (!file) return;
         const reader = new FileReader();
@@ -1145,7 +1315,7 @@
         let panelInstructions = aiType === 'tehon' 
           ? `各コマは以下の構成で考えてください。\n1コマ目：問題となる場面の発生\n2コマ目：その結果どうなるか、周りの反応など\n3コマ目：解決策（ポイント）に気づく、または実践する\n4コマ目：うまくできた結果（笑顔など）` 
           : `各コマは以下の構成で考えてください。\n1コマ目：問題となる場面の発生\n2コマ目：その結果どうなるか、周りの反応など\n3コマ目：周りからの働きかけや解決のポイント提示\n4コマ目：解決できない状態や、本人が解決のポイントを受け入れない様子、問題が続いている困っている場面`;
-        const promptText = `あなたは特別支援教育の専門家です。\n【重要事項】\nこれは学校での生徒指導を行うために、模範的な行動や問題となる行動を対比として提示し、子供たちによりよい行動について学習させるための「教育・指導用教材」に用いるものです。\n【設定情報】\n①領域・項目：${targetDomain} - ${targetItem}\n②タイトル：${worksheetTitle}\n③説明文（どんな場面か）：${scenario}\n④ポイント（ねらい）：${customGoal}\n${panelInstructions}\n必ず以下の形式のJSONデータのみを出力してください。\n{ "panels": [ { "scene": "...", "dialogue": "..." }, { "scene": "...", "dialogue": "..." }, { "scene": "...", "dialogue": "..." }, { "scene": "...", "dialogue": "..." } ] }`;
+        const promptText = `あなたは特別支援教育の専門家です。\n【重要事項】\nこれは学校での生徒指導を行うために、模範的な行動や問題となる行動を対比として提示し、子供たちによりよい行動について学習させるための「教育・指導用教材」に用いるものです。\n【設定情報】\n①領域・項目：${targetDomain} - ${targetItem}\n②タイトル：${worksheetTitle}\n③説明文（どんな場面か）：${scenario}\n④ポイント（ねらい）：${customGoal}\n${panelInstructions}\n※1つのコマで複数人が会話する場合は、必ず『先生「わかるかな？」子供「わかりません」』のように、話者名を明記してください。\n必ず以下の形式のJSONデータのみを出力してください。\n{ "panels": [ { "scene": "...", "dialogue": "..." }, { "scene": "...", "dialogue": "..." }, { "scene": "...", "dialogue": "..." }, { "scene": "...", "dialogue": "..." } ] }`;
 
         try {
           let retries = 0; const maxRetries = 5; let response;
@@ -1175,7 +1345,7 @@
         if (includePanelNumbers) {
            instruction = `CRITICAL INSTRUCTION:\nSTRICTLY 4 panels in a 2x2 grid layout. NO MORE, NO LESS.\nYou MUST write the Panel numbers (1, 2, 3, 4) clearly in the corner of each respective panel.\nDraw white speech bubbles containing the EXACT Japanese dialogue provided below. NO typos. ${textStyleInstruction}\nDo NOT write Visual Scene descriptions in the drawing.`;
         }
-        return `Create a page of a Japanese educational manga with exactly 4 panels arranged in a 2x2 grid.\nStyle: Clean anime illustration, child-friendly, Japanese elementary school textbook style.\n\n【CRITICAL EDUCATIONAL CONTEXT】\nThis image is strictly for an educational material used in elementary schools to teach children appropriate behavior and social skills. It may depict mild examples of undesirable behavior solely as an educational counter-example, followed by the correct behavior.\n\n${instruction}\n\nTheme: ${formatTextForPrompt(targetDomain, 'kanji')}\n\nPanel 1:\nScene: ${formatTextForPrompt(mangaData?.panels?.[0]?.scene, 'kanji')}\nSpeech: "${formatTextForPrompt(mangaData?.panels?.[0]?.dialogue, textStyle)}"\n\nPanel 2:\nScene: ${formatTextForPrompt(mangaData?.panels?.[1]?.scene, 'kanji')}\nSpeech: "${formatTextForPrompt(mangaData?.panels?.[1]?.dialogue, textStyle)}"\n\nPanel 3:\nScene: ${formatTextForPrompt(mangaData?.panels?.[2]?.scene, 'kanji')}\nSpeech: "${formatTextForPrompt(mangaData?.panels?.[2]?.dialogue, textStyle)}"\n\nPanel 4:\nScene: ${formatTextForPrompt(mangaData?.panels?.[3]?.scene, 'kanji')}\nSpeech: "${formatTextForPrompt(mangaData?.panels?.[3]?.dialogue, textStyle)}"`;
+        return `Create a page of a Japanese educational manga with exactly 4 panels arranged in a 2x2 grid.\nStyle: Clean anime illustration, child-friendly, Japanese elementary school textbook style.\n\n【CRITICAL EDUCATIONAL CONTEXT】\nThis image is strictly for an educational material used in elementary schools to teach children appropriate behavior and social skills. It may depict mild examples of undesirable behavior solely as an educational counter-example, followed by the correct behavior.\n\n${instruction}\n\nTheme: ${formatTextForPrompt(targetDomain, 'kanji')}\n\nPanel 1:\nScene: ${formatTextForPrompt(mangaData?.panels?.[0]?.scene, 'kanji')}\n${parseDialogue(mangaData?.panels?.[0]?.dialogue, textStyle)}\n\nPanel 2:\nScene: ${formatTextForPrompt(mangaData?.panels?.[1]?.scene, 'kanji')}\n${parseDialogue(mangaData?.panels?.[1]?.dialogue, textStyle)}\n\nPanel 3:\nScene: ${formatTextForPrompt(mangaData?.panels?.[2]?.scene, 'kanji')}\n${parseDialogue(mangaData?.panels?.[2]?.dialogue, textStyle)}\n\nPanel 4:\nScene: ${formatTextForPrompt(mangaData?.panels?.[3]?.scene, 'kanji')}\n${parseDialogue(mangaData?.panels?.[3]?.dialogue, textStyle)}`;
       };
 
       const copyToClipboard = (text) => {
@@ -1203,12 +1373,81 @@
         setShowSaveModal(true);
       };
 
+      const handleSubMenuPointerDown = (e) => {
+        e.stopPropagation();
+        if (e.target.setPointerCapture) e.target.setPointerCapture(e.pointerId);
+        setSubMenuDrag({
+          startX: e.clientX,
+          startY: e.clientY,
+          origX: subMenuPos.x,
+          origY: subMenuPos.y
+        });
+      };
+      
+      const handleLayerPanelPointerDown = (e) => {
+        e.stopPropagation();
+        if (e.target.setPointerCapture) e.target.setPointerCapture(e.pointerId);
+        setLayerPanelDrag({
+          startX: e.clientX,
+          startY: e.clientY,
+          origX: layerPanelPos.x,
+          origY: layerPanelPos.y
+        });
+      };
+
+      const handleCanvasPointerDown = (e) => {
+        if (drawMode) {
+          e.stopPropagation();
+          e.target.setPointerCapture(e.pointerId);
+          const rect = e.currentTarget.getBoundingClientRect();
+          const scale = rect.width / CANVAS_W;
+          const x = (e.clientX - rect.left) / scale;
+          const y = (e.clientY - rect.top) / scale;
+          setCurrentPath([{x, y}]);
+        } else {
+          setSelectedId(null);
+          setIsEditingTextId(null);
+        }
+      };
+
+      const handleCanvasPointerMove = (e) => {
+        if (drawMode && currentPath) {
+          e.stopPropagation();
+          const rect = e.currentTarget.getBoundingClientRect();
+          const scale = rect.width / CANVAS_W;
+          const x = (e.clientX - rect.left) / scale;
+          const y = (e.clientY - rect.top) / scale;
+          setCurrentPath(prev => [...prev, {x, y}]);
+        }
+      };
+
+      const handleCanvasPointerUp = (e) => {
+        if (drawMode && currentPath) {
+          e.stopPropagation();
+          if (currentPath.length > 1) {
+            setActiveDrawingPaths(prev => [...prev, { points: currentPath, strokeColor: penColor, strokeWidth: penWidth }]);
+          }
+          setCurrentPath(null);
+        }
+      };
+
       const renderElements = (isPreviewMode) => {
         const innerScale = bindingMargin ? 0.88 : 1.0;
         const offsetX = bindingMargin ? 95 : 0; 
         const offsetY = bindingMargin ? 40 : 0;
 
-        return elements.map(el => {
+        return elements.map((el, index) => {
+          if (el.type === 'path') {
+            return (
+              <div key={el.id} className="absolute" style={{ left: 0, top: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 10 + index }}>
+                <svg width="100%" height="100%" viewBox={`0 0 ${CANVAS_W} ${CANVAS_H}`} style={{ pointerEvents: 'none' }}>
+                  <polyline points={el.points.map(p => `${p.x},${p.y}`).join(' ')} fill="none" stroke={el.strokeColor} strokeWidth={el.strokeWidth} strokeLinecap="round" strokeLinejoin="round" style={{ cursor: isPreviewMode && !drawMode ? 'pointer' : 'default', pointerEvents: isPreviewMode && !drawMode ? 'stroke' : 'none' }} onPointerDown={(e) => { if (isPreviewMode && !drawMode) { e.stopPropagation(); setSelectedId(el.id); setIsEditingTextId(null); } }} />
+                  {isPreviewMode && selectedId === el.id && ( <polyline points={el.points.map(p => `${p.x},${p.y}`).join(' ')} fill="none" stroke="#3b82f6" strokeWidth={Number(el.strokeWidth) + 4} strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.5, pointerEvents: 'none' }} /> )}
+                </svg>
+              </div>
+            );
+          }
+
           const left = el.x * innerScale + offsetX;
           const top = el.y * innerScale + offsetY;
           const width = el.width * innerScale;
@@ -1221,23 +1460,24 @@
           const bottomBorder = el.borderBottom ? `${borderWidth}px solid #1e293b` : baseBorder;
           
           return (
-            <div key={el.id} className={`absolute ${isPreviewMode && selectedId === el.id ? 'z-50' : 'z-10'}`}
+            <div key={el.id} className="absolute"
               style={{
                 left: `${left}px`, top: `${top}px`, width: `${width}px`, height: `${height}px`, 
                 backgroundColor: el.bg || 'transparent', boxSizing: 'border-box',
                 borderTop: baseBorder, borderLeft: el.border ? baseBorder : 'none', borderRight: el.border ? baseBorder : 'none', borderBottom: bottomBorder,
                 borderRadius: `${borderRadius}px`, 
+                zIndex: 10 + index,
                 cursor: isPreviewMode ? 'move' : 'default', 
                 outline: isPreviewMode && selectedId === el.id ? '3px solid #3b82f6' : 'none', outlineOffset: '2px', touchAction: isPreviewMode ? 'none' : 'auto',
-                pointerEvents: isPreviewMode && el.type === 'text' && selectedId !== el.id && !el.bg && !el.border && !el.borderBottom ? 'none' : 'auto'
+                pointerEvents: isPreviewMode && drawMode ? 'none' : (isPreviewMode && ((el.type === 'text' && selectedId !== el.id && !el.bg && !el.border && !el.borderBottom) || (el.type === 'drawing' && selectedId !== el.id)) ? 'none' : 'auto')
               }} onPointerDown={(e) => isPreviewMode && handlePointerDown(e, el.id, 'move')}>
               
               {el.type === 'text' && (
                 <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', boxSizing: 'border-box', padding: `${padding}px`, justifyContent: el.align === 'center' ? 'center' : 'flex-start' }}>
                   {isPreviewMode && selectedId === el.id && isEditingTextId === el.id ? 
-                    <textarea ref={textAreaRef} autoFocus value={el.text} onChange={(e) => updateElement(el.id, { text: e.target.value })} onBlur={() => setIsEditingTextId(null)} onPointerDown={(e) => e.stopPropagation()} onTouchStart={(e) => e.stopPropagation()} className="custom-scroll no-print" style={{ width: '100%', height: '100%', backgroundColor: 'transparent', outline: 'none', resize: 'none', border: 'none', textAlign: el.align, fontSize: `${fontSize}px`, fontWeight: el.fontWeight, userSelect: 'text', WebkitUserSelect: 'text', touchAction: 'auto', pointerEvents: 'auto' }} /> :
-                    <div style={{ width: '100%', wordBreak: 'keep-all', whiteSpace: 'pre-wrap', display: 'block', textAlign: el.align, fontSize: `${fontSize}px`, fontWeight: el.fontWeight, lineHeight: 1.8 }}>
-                      <span style={{ pointerEvents: 'auto' }}>{renderText(el.text)}</span>
+                    <textarea ref={textAreaRef} autoFocus value={el.text} onChange={(e) => updateElement(el.id, { text: e.target.value })} onBlur={() => setIsEditingTextId(null)} onPointerDown={(e) => e.stopPropagation()} onTouchStart={(e) => e.stopPropagation()} className="custom-scroll no-print" style={{ width: '100%', height: '100%', backgroundColor: 'transparent', outline: 'none', resize: 'none', border: 'none', textAlign: el.align, fontSize: `${fontSize}px`, fontWeight: el.fontWeight, color: el.color || '#000000', fontFamily: el.fontFamily || 'sans-serif', userSelect: 'text', WebkitUserSelect: 'text', touchAction: 'auto', pointerEvents: 'auto' }} /> :
+                    <div style={{ width: '100%', wordBreak: 'keep-all', whiteSpace: 'pre-wrap', display: 'block', textAlign: el.align, fontSize: `${fontSize}px`, fontWeight: el.fontWeight, lineHeight: 1.8, color: el.color || '#000000', fontFamily: el.fontFamily || 'sans-serif' }}>
+                      <span style={{ pointerEvents: isPreviewMode && drawMode ? 'none' : 'auto' }}>{renderText(el.text)}</span>
                     </div>
                   }
                 </div>
@@ -1246,6 +1486,15 @@
               {el.type === 'manga_placeholder' && (
                 <div style={{ width: '100%', height: '100%', position: 'relative', backgroundColor: '#f8fafc', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: `${16 * innerScale}px`, overflow: 'hidden', boxSizing: 'border-box', border: `${Math.max(1, 4 * innerScale)}px solid #1e293b` }}>
                   {el.src ? <img src={el.src} style={{ width: '100%', height: '100%', objectFit: 'contain', pointerEvents: 'none' }} alt="" /> : <div style={{ textAlign: 'center', color: '#cbd5e1' }} className="no-print"><i className="fas fa-image" style={{ fontSize: `${80 * innerScale}px`, opacity: 0.5 }}></i></div>}
+                </div>
+              )}
+              {el.type === 'drawing' && (
+                <div style={{ width: '100%', height: '100%', position: 'relative' }}>
+                  <svg width="100%" height="100%" viewBox={`0 0 ${el.origWidth || el.width} ${el.origHeight || el.height}`} style={{ pointerEvents: 'none', display: 'block' }}>
+                    {el.paths && el.paths.map((path, i) => (
+                      <polyline key={i} points={path.points.map(p => `${p.x},${p.y}`).join(' ')} fill="none" stroke={path.strokeColor} strokeWidth={path.strokeWidth} strokeLinecap="round" strokeLinejoin="round" style={{ pointerEvents: isPreviewMode && !drawMode ? 'stroke' : 'none' }} />
+                    ))}
+                  </svg>
                 </div>
               )}
               {isPreviewMode && selectedId === el.id && (
@@ -1273,7 +1522,7 @@
               <i className="fas fa-border-all" style={{ color: '#60a5fa', fontSize: '24px' }}></i>
               <h1 style={{ fontSize: '20px', fontWeight: 'bold', letterSpacing: '-0.05em', margin: 0 }}>自立活動プリントメーカー</h1>
               {step !== 'environment_check' && (
-                <button onClick={() => setStep('environment_check')} style={{ marginLeft: '16px', fontSize: '12px', color: '#cbd5e1', textDecoration: 'underline', background: 'none', border: 'none', cursor: 'pointer' }}>タイトルに戻る</button>
+                <button onClick={() => { if (drawMode) endDrawMode(); setStep('environment_check'); }} style={{ marginLeft: '16px', fontSize: '12px', color: '#cbd5e1', textDecoration: 'underline', background: 'none', border: 'none', cursor: 'pointer' }}>タイトルに戻る</button>
               )}
             </div>
           </div>
@@ -1380,6 +1629,9 @@
 
             {step === 'manual_edit' && (
               <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '24px' }}>
+                <div style={{ padding: '12px', backgroundColor: '#fffbeb', border: '1px solid #fde68a', borderRadius: '8px', marginBottom: '16px', fontSize: '14px', color: '#b45309' }}>
+                  <i className="fas fa-info-circle"></i> 1つのコマで複数人が会話する場合は、必ず <strong>先生「わかるかな？」子供「わかりません」</strong> のように、話者名を「」の前に明記してください。画像生成AIが吹き出しを正しく分けて描くようになります。
+                </div>
                 <div style={{ flexShrink: 0, display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
                   <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
                     <select value={textStyle} onChange={(e) => setTextStyle(e.target.value)} style={{ padding: '10px 16px', fontSize: '14px', fontWeight: 'bold', border: '1px solid #cbd5e1', borderRadius: '8px', backgroundColor: '#fef08a', color: '#854d0e', outline: 'none', cursor: 'pointer' }}><option value="ruby">漢字（ルビあり）</option><option value="hiragana">すべてひらがな</option><option value="kanji">漢字（ルビなし）</option></select>
@@ -1406,45 +1658,129 @@
             {step === 'preview' && (
               <div style={{ flex: 1, display: 'flex', flexDirection: 'column', position: 'relative' }}>
                 
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', padding: '12px', backgroundColor: 'white', borderBottom: '1px solid #cbd5e1', zIndex: 100, justifyContent: 'space-between', alignItems: 'center' }}>
-                   <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                     <button onClick={() => setStep('manual_edit')} style={{ padding: '6px 12px', fontSize: '14px', backgroundColor: '#e2e8f0', color: '#475569', borderRadius: '8px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '4px', border: 'none', cursor: 'pointer' }}><i className="fas fa-chevron-left"></i> 戻る</button>
+                <div style={{ display: 'flex', flexDirection: 'column', backgroundColor: 'white', borderBottom: '1px solid #cbd5e1', zIndex: 100 }}>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', padding: '12px', alignItems: 'center' }}>
+                     <button onClick={() => { if (drawMode) endDrawMode(); setStep('manual_edit'); }} style={{ padding: '6px 12px', fontSize: '14px', backgroundColor: '#e2e8f0', color: '#475569', borderRadius: '8px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '4px', border: 'none', cursor: 'pointer' }}><i className="fas fa-chevron-left"></i> 戻る</button>
+                     
                      <div style={{ display: 'flex', alignItems: 'center', gap: '4px', backgroundColor: '#f1f5f9', padding: '4px 8px', borderRadius: '8px', border: '1px solid #cbd5e1' }}>
                        <button onClick={() => setZoom(z => Math.max(0.4, z - 0.05))} style={{ padding: '4px', color: '#475569', cursor: 'pointer', border: 'none', background: 'none' }}><i className="fas fa-search-minus"></i></button>
                        <span style={{ fontSize: '12px', fontWeight: 'bold', width: '40px', textAlign: 'center', color: '#1e293b' }}>{Math.round(zoom * 100)}%</span>
                        <button onClick={() => setZoom(z => Math.min(1.5, z + 0.05))} style={{ padding: '4px', color: '#475569', cursor: 'pointer', border: 'none', background: 'none' }}><i className="fas fa-search-plus"></i></button>
                      </div>
-                   </div>
-                   <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+
+                     <div style={{ width: '2px', height: '24px', backgroundColor: '#e2e8f0', margin: '0 4px' }}></div>
+
                      <button onClick={addNewText} style={{ padding: '6px 12px', fontSize: '14px', backgroundColor: '#3b82f6', color: 'white', borderRadius: '8px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '4px', border: 'none', cursor: 'pointer' }}><i className="fas fa-font"></i> テキスト</button>
                      <label style={{ padding: '6px 12px', fontSize: '14px', backgroundColor: '#3b82f6', color: 'white', borderRadius: '8px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer', margin: 0 }}>
                        <i className="fas fa-image"></i> 画像<input type="file" accept="image/*" onChange={handleImageUpload} style={{ display: 'none' }} />
                      </label>
-                   </div>
-                   <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                     <button onClick={handleOpenSaveModal} style={{ padding: '6px 12px', fontSize: '14px', backgroundColor: '#10b981', color: 'white', borderRadius: '8px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '4px', border: 'none', cursor: 'pointer' }}><i className="fas fa-save"></i> データ保存</button>
-                     <label style={{ padding: '6px 12px', fontSize: '14px', backgroundColor: '#10b981', color: 'white', borderRadius: '8px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer', margin: 0 }}>
+                     <button onClick={handlePenToggle} style={{ padding: '6px 12px', fontSize: '14px', backgroundColor: drawMode ? '#f43f5e' : '#64748b', color: 'white', borderRadius: '8px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '4px', border: 'none', cursor: 'pointer' }}><i className="fas fa-pen"></i> ペン</button>
+                     
+                     <div style={{ width: '2px', height: '24px', backgroundColor: '#e2e8f0', margin: '0 4px' }}></div>
+
+                     <button onClick={() => { if (drawMode) endDrawMode(); setShowLayerPanel(!showLayerPanel); }} style={{ padding: '6px 12px', fontSize: '14px', backgroundColor: showLayerPanel ? '#f59e0b' : '#64748b', color: 'white', borderRadius: '8px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '4px', border: 'none', cursor: 'pointer' }}><i className="fas fa-layer-group"></i> レイヤー</button>
+
+                     <div style={{ width: '2px', height: '24px', backgroundColor: '#e2e8f0', margin: '0 4px' }}></div>
+
+                     <button onClick={() => { if (drawMode) endDrawMode(); handleOpenSaveModal(); }} style={{ padding: '6px 12px', fontSize: '14px', backgroundColor: '#10b981', color: 'white', borderRadius: '8px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '4px', border: 'none', cursor: 'pointer' }}><i className="fas fa-save"></i> データ保存</button>
+                     <label style={{ padding: '6px 12px', fontSize: '14px', backgroundColor: '#10b981', color: 'white', borderRadius: '8px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer', margin: 0 }} onClick={(e) => { if (drawMode) endDrawMode(); }}>
                        <i className="fas fa-folder-open"></i> データ読込<input type="file" accept=".json" onChange={handleLoad} style={{ display: 'none' }} />
                      </label>
-                     <button onClick={() => setBindingMargin(!bindingMargin)} style={{ padding: '6px 12px', fontSize: '14px', backgroundColor: bindingMargin ? '#f59e0b' : '#64748b', color: 'white', borderRadius: '8px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '4px', border: bindingMargin ? '2px solid #fcd34d' : 'none', cursor: 'pointer' }}><i className="fas fa-box"></i> とじ代</button>
+                     <button onClick={() => { if (drawMode) endDrawMode(); setBindingMargin(!bindingMargin); }} style={{ padding: '6px 12px', fontSize: '14px', backgroundColor: bindingMargin ? '#f59e0b' : '#64748b', color: 'white', borderRadius: '8px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '4px', border: bindingMargin ? '2px solid #fcd34d' : 'none', cursor: 'pointer' }}><i className="fas fa-box"></i> とじ代</button>
                      
-                     {selectedId && (
-                        <div style={{ display: 'flex', gap: '4px', padding: '4px', backgroundColor: '#f1f5f9', borderRadius: '8px', border: '1px solid #cbd5e1' }}>
-                          {elements.find(e=>e.id===selectedId)?.type === 'text' && (
-                            <button onClick={() => startEditing(selectedId)} style={{ padding: '4px 8px', color: '#2563eb', border: 'none', background: 'none', cursor: 'pointer', fontWeight: 'bold' }}><i className="fas fa-edit"></i> 編集</button>
-                          )}
-                          {elements.find(e=>e.id===selectedId)?.type === 'image' && (
-                            <button onClick={() => startCrop(selectedId)} style={{ padding: '4px 8px', color: '#475569', border: 'none', background: 'none', cursor: 'pointer' }} title="トリミング"><i className="fas fa-crop"></i></button>
-                          )}
-                          <button onClick={handleZoomInElement} style={{ padding: '4px 8px', color: '#475569', border: 'none', background: 'none', cursor: 'pointer' }}><i className="fas fa-plus"></i></button>
-                          <button onClick={handleZoomOutElement} style={{ padding: '4px 8px', color: '#475569', border: 'none', background: 'none', cursor: 'pointer' }}><i className="fas fa-minus"></i></button>
-                          <button onClick={() => deleteElement(selectedId)} style={{ padding: '4px 8px', color: '#ef4444', border: 'none', background: 'none', cursor: 'pointer' }}><i className="fas fa-trash"></i></button>
-                        </div>
-                     )}
-                     
-                     <button onClick={() => setShowPromptModal(true)} style={{ padding: '6px 12px', fontSize: '14px', backgroundColor: '#64748b', color: 'white', borderRadius: '8px', fontWeight: 'bold', border: 'none', cursor: 'pointer' }}>プロンプト表示</button>
-                     <button onClick={() => { setSelectedId(null); setIsEditingTextId(null); setTimeout(()=>window.print(), 200); }} style={{ padding: '6px 16px', fontSize: '16px', backgroundColor: '#ef4444', color: 'white', borderRadius: '8px', fontWeight: '900', display: 'flex', alignItems: 'center', gap: '6px', border: 'none', cursor: 'pointer' }}><i className="fas fa-print"></i> 印刷</button>
-                   </div>
+                     <div style={{ marginLeft: 'auto', display: 'flex', gap: '8px', alignItems: 'center' }}>
+                       <button onClick={() => { if (drawMode) endDrawMode(); setShowPromptModal(true); }} style={{ padding: '6px 12px', fontSize: '14px', backgroundColor: '#64748b', color: 'white', borderRadius: '8px', fontWeight: 'bold', border: 'none', cursor: 'pointer' }}>プロンプト表示</button>
+                       <button onClick={() => { if (drawMode) endDrawMode(); setSelectedId(null); setIsEditingTextId(null); setTimeout(()=>window.print(), 200); }} style={{ padding: '6px 16px', fontSize: '16px', backgroundColor: '#ef4444', color: 'white', borderRadius: '8px', fontWeight: '900', display: 'flex', alignItems: 'center', gap: '6px', border: 'none', cursor: 'pointer' }}><i className="fas fa-print"></i> 印刷</button>
+                     </div>
+                  </div>
+
+                  {showLayerPanel && (
+                    <div style={{ position: 'absolute', left: `${layerPanelPos.x}px`, top: `${layerPanelPos.y}px`, zIndex: 200, backgroundColor: 'white', borderRadius: '8px', boxShadow: '0 10px 25px rgba(0,0,0,0.2)', border: '1px solid #cbd5e1', display: 'flex', flexDirection: 'column', overflow: 'hidden', width: '250px' }}>
+                      <div onPointerDown={handleLayerPanelPointerDown} style={{ backgroundColor: '#f1f5f9', padding: '6px 12px', cursor: 'move', display: 'flex', alignItems: 'center', gap: '8px', borderBottom: '1px solid #e2e8f0', userSelect: 'none', touchAction: 'none' }}>
+                        <i className="fas fa-grip-horizontal" style={{ color: '#94a3b8' }}></i>
+                        <span style={{ fontSize: '12px', fontWeight: 'bold', color: '#475569' }}>レイヤー（上が前面）</span>
+                        <button onClick={() => setShowLayerPanel(false)} style={{ marginLeft: 'auto', background: 'none', border: 'none', color: '#64748b', cursor: 'pointer' }}><i className="fas fa-times"></i></button>
+                      </div>
+                      <div className="custom-scroll" style={{ maxHeight: '250px', overflowY: 'auto', padding: '8px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                        {[...elements].reverse().map((el) => {
+                          const index = elements.findIndex(e => e.id === el.id);
+                          const isSelected = selectedId === el.id;
+                          return (
+                            <div key={el.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '4px 8px', backgroundColor: isSelected ? '#eff6ff' : '#f8fafc', border: isSelected ? '1px solid #3b82f6' : '1px solid #e2e8f0', borderRadius: '4px', cursor: 'pointer' }} onClick={() => { if(!drawMode) setSelectedId(el.id); }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', overflow: 'hidden' }}>
+                                <i className={`fas ${el.type === 'text' ? 'fa-font' : el.type === 'image' || el.type === 'manga_placeholder' ? 'fa-image' : 'fa-pen'}`} style={{ color: '#64748b', fontSize: '12px' }}></i>
+                                <span style={{ fontSize: '12px', color: '#334155', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden', maxWidth: '120px' }}>
+                                  {el.type === 'text' ? el.text || 'テキスト' : el.type === 'image' || el.type === 'manga_placeholder' ? '画像' : 'ペン描画'}
+                                </span>
+                              </div>
+                              <div style={{ display: 'flex', gap: '4px' }}>
+                                <button onClick={(e) => { e.stopPropagation(); moveLayer(el.id, 'up'); }} disabled={index === elements.length - 1} style={{ background: 'none', border: 'none', color: index === elements.length - 1 ? '#cbd5e1' : '#475569', cursor: index === elements.length - 1 ? 'default' : 'pointer', padding: '2px' }} title="前面へ"><i className="fas fa-chevron-up"></i></button>
+                                <button onClick={(e) => { e.stopPropagation(); moveLayer(el.id, 'down'); }} disabled={index === 0} style={{ background: 'none', border: 'none', color: index === 0 ? '#cbd5e1' : '#475569', cursor: index === 0 ? 'default' : 'pointer', padding: '2px' }} title="背面へ"><i className="fas fa-chevron-down"></i></button>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {(drawMode || selectedId) && (
+                    <div style={{ position: 'absolute', left: `${subMenuPos.x}px`, top: `${subMenuPos.y}px`, zIndex: 200, backgroundColor: 'white', borderRadius: '8px', boxShadow: '0 10px 25px rgba(0,0,0,0.2)', border: '1px solid #cbd5e1', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+                      <div onPointerDown={handleSubMenuPointerDown} style={{ backgroundColor: '#f1f5f9', padding: '6px 12px', cursor: 'move', display: 'flex', alignItems: 'center', gap: '8px', borderBottom: '1px solid #e2e8f0', userSelect: 'none', touchAction: 'none' }}>
+                        <i className="fas fa-grip-horizontal" style={{ color: '#94a3b8' }}></i>
+                        <span style={{ fontSize: '12px', fontWeight: 'bold', color: '#475569' }}>{drawMode ? 'ペン設定' : (elements.find(e=>e.id===selectedId)?.type === 'text' ? 'テキスト設定' : (elements.find(e=>e.id===selectedId)?.type === 'image' || elements.find(e=>e.id===selectedId)?.type === 'manga_placeholder' ? '画像設定' : '描画設定'))}</span>
+                      </div>
+                      <div style={{ padding: '12px', display: 'flex', flexWrap: 'wrap', gap: '12px', alignItems: 'center' }}>
+                        {drawMode && (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: '#ffffff', padding: '4px 8px', borderRadius: '8px', border: '1px solid #cbd5e1' }}>
+                            <input type="color" value={penColor} onChange={e => setPenColor(e.target.value)} style={{ width: '24px', height: '24px', padding: 0, border: 'none', cursor: 'pointer', backgroundColor: 'transparent' }} title="ペンの色" />
+                            <input type="range" min="2" max="50" value={penWidth} onChange={e => setPenWidth(e.target.value)} style={{ width: '100px', margin: 0 }} title="ペンの太さ" />
+                          </div>
+                        )}
+                        
+                        {!drawMode && selectedId && (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '4px', backgroundColor: '#ffffff', padding: '4px 8px', borderRadius: '8px', border: '1px solid #cbd5e1' }}>
+                            {elements.find(e=>e.id===selectedId)?.type === 'text' && (
+                              <>
+                                <input 
+                                  type="color" 
+                                  value={elements.find(e => e.id === selectedId)?.color || '#000000'}
+                                  onChange={(e) => updateElement(selectedId, { color: e.target.value })}
+                                  style={{ width: '24px', height: '24px', padding: '0', border: 'none', borderRadius: '4px', cursor: 'pointer', backgroundColor: 'transparent' }}
+                                  title="文字色"
+                                />
+                                <select 
+                                  value={elements.find(e => e.id === selectedId)?.fontFamily || 'sans-serif'}
+                                  onChange={(e) => updateElement(selectedId, { fontFamily: e.target.value })}
+                                  style={{ fontSize: '12px', padding: '2px 4px', borderRadius: '4px', border: '1px solid #cbd5e1', outline: 'none' }}
+                                >
+                                  <option value="sans-serif">ゴシック体</option>
+                                  <option value="'BIZ UDPGothic', sans-serif">UDゴシック</option>
+                                  <option value="serif">明朝体</option>
+                                  <option value="'Klee One', cursive">硬筆・えんぴつ</option>
+                                  <option value="'Yusei Magic', sans-serif">手書き風</option>
+                                  <option value="'Dela Gothic One', cursive">極太ポップ</option>
+                                  <option value="'DotGothic16', sans-serif">コミック</option>
+                                </select>
+                                <div style={{ width: '1px', height: '16px', backgroundColor: '#cbd5e1', margin: '0 4px' }}></div>
+                                <button onClick={() => startEditing(selectedId)} style={{ padding: '4px 8px', color: '#2563eb', border: 'none', background: '#eff6ff', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', fontSize: '12px' }}><i className="fas fa-edit"></i> 編集</button>
+                              </>
+                            )}
+                            {elements.find(e=>e.id===selectedId)?.type === 'image' && (
+                              <button onClick={() => startCrop(selectedId)} style={{ padding: '4px 8px', color: '#475569', border: 'none', background: '#f1f5f9', borderRadius: '4px', cursor: 'pointer', fontSize: '12px' }} title="トリミング"><i className="fas fa-crop"></i> 切り抜き</button>
+                            )}
+                            {elements.find(e=>e.id===selectedId)?.type !== 'drawing' && elements.find(e=>e.id===selectedId)?.type !== 'path' && (
+                              <div style={{ width: '1px', height: '16px', backgroundColor: '#cbd5e1', margin: '0 4px' }}></div>
+                            )}
+                            <button onClick={handleZoomInElement} style={{ padding: '4px 8px', color: '#475569', border: 'none', background: '#f1f5f9', borderRadius: '4px', cursor: 'pointer', fontSize: '12px' }}><i className="fas fa-plus"></i></button>
+                            <button onClick={handleZoomOutElement} style={{ padding: '4px 8px', color: '#475569', border: 'none', background: '#f1f5f9', borderRadius: '4px', cursor: 'pointer', fontSize: '12px' }}><i className="fas fa-minus"></i></button>
+                            <div style={{ width: '1px', height: '16px', backgroundColor: '#cbd5e1', margin: '0 4px' }}></div>
+                            <button onClick={() => deleteElement(selectedId)} style={{ padding: '4px 8px', color: '#ef4444', border: 'none', background: '#fef2f2', borderRadius: '4px', cursor: 'pointer', fontSize: '12px' }}><i className="fas fa-trash"></i></button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
                 
                 <div className="custom-scroll" style={{ flex: 1, overflow: 'auto', display: 'flex', justifyContent: 'center', alignItems: 'flex-start', padding: '40px' }}>
@@ -1456,7 +1792,9 @@
                         transformOrigin: 'top left', transform: `scale(${zoom})`,
                         touchAction: 'none' 
                       }}
-                      onPointerDown={() => { setSelectedId(null); setIsEditingTextId(null); }}
+                      onPointerDown={handleCanvasPointerDown}
+                      onPointerMove={handleCanvasPointerMove}
+                      onPointerUp={handleCanvasPointerUp}
                     >
                       {bindingMargin && (
                         <div style={{ position: 'absolute', top: 0, left: 0, width: '95px', height: '100%', backgroundColor: 'rgba(203, 213, 225, 0.5)', borderRight: '2px dashed #94a3b8', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 0, pointerEvents: 'none' }}>
@@ -1464,6 +1802,28 @@
                         </div>
                       )}
                       {renderElements(true)}
+                      {activeDrawingPaths.map((path, index) => (
+                        <div key={`active_${index}`} className="absolute z-50" style={{ left: 0, top: 0, width: '100%', height: '100%', pointerEvents: 'none' }}>
+                          <svg width="100%" height="100%" viewBox={`0 0 ${CANVAS_W} ${CANVAS_H}`}>
+                            <polyline 
+                              points={path.points.map(p => `${p.x},${p.y}`).join(' ')} 
+                              fill="none" stroke={path.strokeColor} strokeWidth={path.strokeWidth} 
+                              strokeLinecap="round" strokeLinejoin="round" 
+                            />
+                          </svg>
+                        </div>
+                      ))}
+                      {currentPath && (
+                        <div className="absolute z-50" style={{ left: 0, top: 0, width: '100%', height: '100%', pointerEvents: 'none' }}>
+                          <svg width="100%" height="100%" viewBox={`0 0 ${CANVAS_W} ${CANVAS_H}`}>
+                            <polyline 
+                              points={currentPath.map(p => `${p.x},${p.y}`).join(' ')} 
+                              fill="none" stroke={penColor} strokeWidth={penWidth} 
+                              strokeLinecap="round" strokeLinejoin="round" 
+                            />
+                          </svg>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -1670,7 +2030,7 @@
                 <div style={{ backgroundColor: '#f1f5f9', padding: '12px 16px', borderRadius: '8px', marginBottom: '32px', border: '2px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: '4px' }}>
                    <span style={{ fontSize: '12px', fontWeight: 'bold', color: '#64748b' }}>出力されるファイル名：</span>
                    <span style={{ fontWeight: 'bold', fontSize: '16px', color: '#1e293b', wordBreak: 'break-all' }}>
-                     自活プリ-{authorName.trim() || '〇〇'}のシナリオ-{exportTargetScenario.title.replace(/[\(（][^\)）]+[\)）]/g, '').replace(/\s+/g, '_')}.json
+                     自活プリ-{authorName.trim() || '〇〇'}のシナリオ-{exportTargetScenario.title.replace(new RegExp("[(（][^)）]+[)）]", "g"), '').replace(new RegExp("\\s+", "g"), '_')}.json
                    </span>
                 </div>
 
