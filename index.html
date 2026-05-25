@@ -91,7 +91,7 @@
           const data = await res.json();
           if (data && data.models) {
             const models = data.models.map(m => m.name.replace('models/', ''));
-            const priorities = ['gemini-2.5-flash', 'gemini-3.0-flash', 'gemini-2.5-pro', 'gemini-2.0-flash', 'gemini-1.5-flash'];
+            const priorities = ['gemini-3.5-flash', 'gemini-2.5-flash', 'gemini-3.0-flash', 'gemini-2.5-pro', 'gemini-2.0-flash', 'gemini-1.5-flash'];
             for (const p of priorities) {
               if (models.includes(p)) { optimalModelCache = p; return p; }
             }
