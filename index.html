@@ -82,7 +82,28 @@
     const { useState, useEffect, useRef, Fragment } = React;
     const { createRoot, flushSync } = ReactDOM;
 
-    const AI_MODEL_SCENARIO = "gemini-2.5-flash"; 
+    let optimalModelCache = null;
+    const getOptimalModel = async (apiKey) => {
+      if (optimalModelCache) return optimalModelCache;
+      try {
+        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data && data.models) {
+            const models = data.models.map(m => m.name.replace('models/', ''));
+            const priorities = ['gemini-2.5-flash', 'gemini-3.0-flash', 'gemini-2.5-pro', 'gemini-2.0-flash', 'gemini-1.5-flash'];
+            for (const p of priorities) {
+              if (models.includes(p)) { optimalModelCache = p; return p; }
+            }
+            const fallbackFlash = models.find(m => m.includes('gemini') && m.includes('flash') && !m.includes('exp') && !m.includes('8b'));
+            if (fallbackFlash) { optimalModelCache = fallbackFlash; return fallbackFlash; }
+            const anyGemini = models.find(m => m.includes('gemini'));
+            if (anyGemini) { optimalModelCache = anyGemini; return anyGemini; }
+          }
+        }
+      } catch (e) { console.error("Failed to fetch models", e); }
+      return 'gemini-2.5-flash';
+    };
     const EXTERNAL_DATA_URL = "scenarios.json"; 
 
     const domainData = [
@@ -1320,7 +1341,8 @@
         try {
           let retries = 0; const maxRetries = 5; let response;
           while (retries < maxRetries) {
-            response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${AI_MODEL_SCENARIO}:generateContent?key=${apiKey}`, {
+            const modelName = await getOptimalModel(apiKey);
+            response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`, {
               method: 'POST', headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ contents: [{ parts: [{ text: promptText }] }], generationConfig: { responseMimeType: "application/json" } })
             });
